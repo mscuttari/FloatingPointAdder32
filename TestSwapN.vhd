@@ -11,12 +11,12 @@ end TestSwapN;
  
 architecture behavior of TestSwapN is 
 	component SwapN
-	generic ( n : integer := 5 );
-	port(
-		swap 	: in  	std_logic;
-      x, y 	: in  	std_logic_vector(0 to 4);
-      a, b	: OUT 	std_logic_vector(0 to 4)
-		);
+		generic ( n : integer);
+		port (
+			swap 	: in  	std_logic;
+			x, y 	: in  	std_logic_vector(0 to n-1);
+			a, b	: OUT 	std_logic_vector(0 to n-1)
+			);
 	end component;
     
    -- Inputs
@@ -28,13 +28,15 @@ architecture behavior of TestSwapN is
    signal a, b : std_logic_vector(0 to 4);
 
 begin
-   uut: SwapN port map (
-          swap => swap,
-          x => x,
-          y => y,
-          a => a,
-          b => b
-        );
+   uut: SwapN
+		generic map(n => 5)
+		port map (
+			swap => swap,
+         x => x,
+         y => y,
+         a => a,
+         b => b
+		);
 
    stim_proc: process
    begin
