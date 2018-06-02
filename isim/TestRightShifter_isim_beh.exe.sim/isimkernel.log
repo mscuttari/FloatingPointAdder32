@@ -2,14 +2,24 @@ Command line:
    TestRightShifter_isim_beh.exe
      -simmode  gui
      -simrunnum  0
+<<<<<<< HEAD
      -socket  50734
 
 Sat Jun 02 11:55:38 2018
+=======
+     -socket  51108
+
+Sat Jun 02 11:45:51 2018
+>>>>>>> 1785f14e287c7b9acd8c9e19912bc655cd5848ab
 
 
- Elaboration Time: 0.03125 sec
+ Elaboration Time: 0.046875 sec
 
+<<<<<<< HEAD
  Current Memory Usage: 880.497 Meg
+=======
+ Current Memory Usage: 362.222 Meg
+>>>>>>> 1785f14e287c7b9acd8c9e19912bc655cd5848ab
 
  Total Signals          : 5
  Total Nets             : 24
@@ -21,9 +31,17 @@ Sat Jun 02 11:55:38 2018
  Total Scalar Nets and Variables : 386
 Total Line Count : 16
 
+<<<<<<< HEAD
  Total Simulation Time: 0.03125 sec
 
  Current Memory Usage: 880.497 Meg
 
 Sat Jun 02 11:56:04 2018
+=======
+ Total Simulation Time: 0.046875 sec
+
+ Current Memory Usage: 676.811 Meg
+
+Sat Jun 02 11:46:22 2018
+>>>>>>> 1785f14e287c7b9acd8c9e19912bc655cd5848ab
 

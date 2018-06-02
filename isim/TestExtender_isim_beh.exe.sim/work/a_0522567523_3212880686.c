@@ -21,12 +21,12 @@
 #include <malloc.h>
 #define alloca _alloca
 #endif
-static const char *ng0 = "C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/RightShifter.vhd";
+static const char *ng0 = "C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/Extender.vhd";
 extern char *IEEE_P_2592010699;
 
 
 
-static void work_a_2227434406_3212880686_p_0(char *t0)
+static void work_a_0522567523_3212880686_p_0(char *t0)
 {
     char t12[16];
     char t14[16];
@@ -75,10 +75,10 @@ LAB3:    t1 = (t0 + 1352U);
     t16 = (t15 + 0U);
     *((int *)t16) = 0;
     t16 = (t15 + 4U);
-    *((int *)t16) = 2;
+    *((int *)t16) = 7;
     t16 = (t15 + 8U);
     *((int *)t16) = 1;
-    t17 = (2 - 0);
+    t17 = (7 - 0);
     t18 = (t17 * 1);
     t18 = (t18 + 1);
     t16 = (t15 + 12U);
@@ -87,17 +87,17 @@ LAB3:    t1 = (t0 + 1352U);
     t20 = (t16 + 0U);
     *((int *)t20) = 0;
     t20 = (t16 + 4U);
-    *((int *)t20) = 4;
+    *((int *)t20) = 7;
     t20 = (t16 + 8U);
     *((int *)t20) = 1;
-    t21 = (4 - 0);
+    t21 = (7 - 0);
     t18 = (t21 * 1);
     t18 = (t18 + 1);
     t20 = (t16 + 12U);
     *((unsigned int *)t20) = t18;
     t11 = xsi_base_array_concat(t11, t12, t13, (char)97, t1, t14, (char)97, t6, t19, (char)101);
-    t18 = (3U + 5U);
-    t22 = (8U != t18);
+    t18 = (8U + 8U);
+    t22 = (16U != t18);
     if (t22 == 1)
         goto LAB5;
 
@@ -106,7 +106,7 @@ LAB6:    t20 = (t0 + 3152);
     t24 = *((char **)t23);
     t25 = (t24 + 56U);
     t26 = *((char **)t25);
-    memcpy(t26, t11, 8U);
+    memcpy(t26, t11, 16U);
     xsi_driver_first_trans_fast_port(t20);
 
 LAB2:    t27 = (t0 + 3072);
@@ -115,15 +115,15 @@ LAB2:    t27 = (t0 + 3072);
 LAB1:    return;
 LAB4:    goto LAB2;
 
-LAB5:    xsi_size_not_matching(8U, t18, 0);
+LAB5:    xsi_size_not_matching(16U, t18, 0);
     goto LAB6;
 
 }
 
 
-extern void work_a_2227434406_3212880686_init()
+extern void work_a_0522567523_3212880686_init()
 {
-	static char *pe[] = {(void *)work_a_2227434406_3212880686_p_0};
-	xsi_register_didat("work_a_2227434406_3212880686", "isim/TestRightShifter_isim_beh.exe.sim/work/a_2227434406_3212880686.didat");
+	static char *pe[] = {(void *)work_a_0522567523_3212880686_p_0};
+	xsi_register_didat("work_a_0522567523_3212880686", "isim/TestExtender_isim_beh.exe.sim/work/a_0522567523_3212880686.didat");
 	xsi_register_executes(pe);
 }
