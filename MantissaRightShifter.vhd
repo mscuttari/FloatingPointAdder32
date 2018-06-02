@@ -16,7 +16,7 @@ end MantissaRightShifter;
 
 architecture Behavioral of MantissaRightShifter is
 
-	-- Generic s-positions right shifter of a 23 bit value
+	-- Generic s-positions right shifter of a n-bit value
 	component RightShifter
 		generic (
 			n : integer;

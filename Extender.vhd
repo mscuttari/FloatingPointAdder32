@@ -22,4 +22,3 @@ architecture Behavioral of Extender is
 begin
 	y <= zero(0 to s-n-1) & x(0 to n-1);
 end Behavioral;
-
