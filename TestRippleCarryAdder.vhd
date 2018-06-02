@@ -11,64 +11,54 @@ end TestRippleCarryAdder;
  
 architecture behavior of TestRippleCarryAdder is 
 	component RippleCarryAdder
+		generic (
+			n	: integer													-- Data size
+		);
 		port (
-			x, y	: in	std_logic;			-- Operands
-			c0		: in 	std_logic;			-- Input carry
-			s		: out std_logic;			-- Result
-			c1		: out	std_logic			-- Output carry
+			x, y			: in	std_logic_vector(0 to n-1);		-- Operands
+			s				: out std_logic_vector(0 to n-1);		-- Result
+			overflow		: out	std_logic								-- Overflow signal
 		);
 	end component;
    
-   signal x, y, c0 : std_logic := '0';	-- Input data
-	signal s, c1 : std_logic;				-- Output data
+   
+	-- Input data
+   signal x, y	: std_logic_vector(0 to 7) := "00000000";
+	
+	-- Output data
+	signal s				: std_logic_vector(0 to 7);
+	signal overflow	: std_logic;
 
 begin
    uut: RippleCarryAdder
+		generic map (
+			n => 8
+		)
 		port map (
          x => x,
          y => y,
-			c0 => c0,
 			s => s,
-			c1 => c1
+			overflow => overflow
 		);
 
    stim_proc: process
    begin
 		wait for 100 ns;
 		
-		x <= '0';
-		y <= '0';
-		c0 <= '1';
+		x <= "01111110";
+		y <= "00000001";
 		wait for 100 ns;
 		
-		x <= '0';
-		y <= '1';
-		c0 <= '0';
+		x <= "01111111";
+		y <= "01111111";
 		wait for 100 ns;
 		
-		x <= '0';
-		y <= '1';
-		c0 <= '1';
-		wait for 100 ns;
+		x <= "11111111";
+		y <= "01111111";
+      wait for 100 ns;
 		
-		x <= '1';
-		y <= '0';
-		c0 <= '0';
-		wait for 100 ns;
-		
-		x <= '1';
-		y <= '0';
-		c0 <= '1';
-		wait for 100 ns;
-		
-		x <= '1';
-		y <= '1';
-		c0 <= '0';
-		wait for 100 ns;
-		
-		x <= '1';
-		y <= '1';
-		c0 <= '1';
+		x <= "11111111";
+		y <= "11111111";
       wait;
    end process;
 
