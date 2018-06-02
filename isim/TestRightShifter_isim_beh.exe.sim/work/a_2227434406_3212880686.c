@@ -21,7 +21,7 @@
 #include <malloc.h>
 #define alloca _alloca
 #endif
-static const char *ng0 = "D:/Programmazione/Progetti/FloatingPointAdder32/RightShifter.vhd";
+static const char *ng0 = "C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/RightShifter.vhd";
 extern char *IEEE_P_2592010699;
 
 

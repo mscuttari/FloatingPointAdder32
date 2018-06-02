@@ -1,19 +1,64 @@
-Running: D:\Xilinx\14.7\ISE_DS\ISE\bin\nt64\unwrapped\fuse.exe -intstyle ise -incremental -o D:/Programmazione/Progetti/FloatingPointAdder32/TestRightShifter_isim_beh.exe -prj D:/Programmazione/Progetti/FloatingPointAdder32/TestRightShifter_beh.prj work.TestRightShifter 
+<<<<<<< HEAD
+Running: D:\Xilinx\14.7\ISE_DS\ISE\bin\nt64\unwrapped\fuse.exe -intstyle ise -incremental -o D:/Programmazione/Progetti/FloatingPointAdder32/TestMantissaRightShifter_isim_beh.exe -prj D:/Programmazione/Progetti/FloatingPointAdder32/TestMantissaRightShifter_beh.prj work.TestMantissaRightShifter 
+=======
+Running: C:\Xilinx\14.7\ISE_DS\ISE\bin\nt64\unwrapped\fuse.exe -intstyle ise -incremental -o C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/TestExtender_isim_beh.exe -prj C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/TestExtender_beh.prj work.TestExtender 
+>>>>>>> 1785f14e287c7b9acd8c9e19912bc655cd5848ab
 ISim P.20131013 (signature 0x7708f090)
-Number of CPUs detected in this system: 4
-Turning on mult-threading, number of parallel sub-compilation jobs: 8 
+Number of CPUs detected in this system: 8
+Turning on mult-threading, number of parallel sub-compilation jobs: 16 
 Determining compilation order of HDL files
+<<<<<<< HEAD
 Parsing VHDL file "D:/Programmazione/Progetti/FloatingPointAdder32/RightShifter.vhd" into library work
-Parsing VHDL file "D:/Programmazione/Progetti/FloatingPointAdder32/TestRightShifter.vhd" into library work
+Parsing VHDL file "D:/Programmazione/Progetti/FloatingPointAdder32/MantissaRightShifter.vhd" into library work
+Parsing VHDL file "D:/Programmazione/Progetti/FloatingPointAdder32/TestMantissaRightShifter.vhd" into library work
+=======
+Parsing VHDL file "C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/Extender.vhd" into library work
+Parsing VHDL file "C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/TestExtender.vhd" into library work
+>>>>>>> 1785f14e287c7b9acd8c9e19912bc655cd5848ab
 Starting static elaboration
+WARNING:HDLCompiler:746 - "D:/Programmazione/Progetti/FloatingPointAdder32/RightShifter.vhd" Line 23: Range is empty (null range)
 Completed static elaboration
 Compiling package standard
 Compiling package std_logic_1164
-Compiling architecture behavioral of entity RightShifter [\RightShifter(8,3)\]
-Compiling architecture behavior of entity testrightshifter
+<<<<<<< HEAD
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,0)\]
+WARNING:HDLCompiler:746 - "D:/Programmazione/Progetti/FloatingPointAdder32/RightShifter.vhd" Line 23: Range is empty (null range)
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,1)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,2)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,3)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,4)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,5)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,6)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,7)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,8)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,9)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,10)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,11)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,12)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,13)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,14)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,15)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,16)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,17)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,18)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,19)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,20)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,21)\]
+Compiling architecture behavioral of entity RightShifter [\RightShifter(23,22)\]
+Compiling architecture behavioral of entity MantissaRightShifter [mantissarightshifter_default]
+Compiling architecture behavior of entity testmantissarightshifter
 Time Resolution for simulation is 1ps.
-Waiting for 1 sub-compilation(s) to finish...
+Waiting for 12 sub-compilation(s) to finish...
+Compiled 51 VHDL Units
+Built simulation executable D:/Programmazione/Progetti/FloatingPointAdder32/TestMantissaRightShifter_isim_beh.exe
+Fuse Memory Usage: 30092 KB
+Fuse CPU Usage: 608 ms
+=======
+Compiling architecture behavioral of entity Extender [\Extender(8,16)\]
+Compiling architecture behavior of entity testextender
+Time Resolution for simulation is 1ps.
 Compiled 5 VHDL Units
-Built simulation executable D:/Programmazione/Progetti/FloatingPointAdder32/TestRightShifter_isim_beh.exe
-Fuse Memory Usage: 29536 KB
-Fuse CPU Usage: 405 ms
+Built simulation executable C:/Users/Nick/Desktop/Uni/Reti Logiche/Progetto/FloatingPointAdder32/TestExtender_isim_beh.exe
+Fuse Memory Usage: 28372 KB
+Fuse CPU Usage: 358 ms
+>>>>>>> 1785f14e287c7b9acd8c9e19912bc655cd5848ab
