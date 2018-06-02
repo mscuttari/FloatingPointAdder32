@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Module Name:    	SwapN
--- Project Name: 		32 bit Floating point adder
+-- Project Name: 		32 bit floating point adder
 -- Description: 		Swap two n-bit values according to a control signal
 --							(0 = don't swap, 1 = swap)
 ----------------------------------------------------------------------------------
