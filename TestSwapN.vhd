@@ -15,7 +15,7 @@ architecture behavior of TestSwapN is
 		port (
 			swap 	: in  	std_logic;
 			x, y 	: in  	std_logic_vector(0 to n-1);
-			a, b	: OUT 	std_logic_vector(0 to n-1)
+			a, b	: out 	std_logic_vector(0 to n-1)
 			);
 	end component;
     
