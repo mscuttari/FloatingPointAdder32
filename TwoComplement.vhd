@@ -7,7 +7,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity TwoComplement is
-	generic ( n : integer);										-- Data size
+	generic ( n : integer );									-- Data size
 	port (
 		x			: 	in 	std_logic_vector(0 to n-1);	-- Input data
 		y			: 	out	std_logic_vector(0 to n-1);	-- Output data
@@ -26,11 +26,9 @@ architecture Behavioral of TwoComplement is
 		);
 	end component;
 	
-	signal one 	: std_logic_vector(0 to n-1) := (others => '0');
+	signal one : std_logic_vector(n-1 downto 0) := (0 => '1', others => '0');
 
 begin
-	-- Create signal with value 1
-	one <= one(0 to n-2) & '1';
 	
 	-- Add 1 to the one complement to get the two complement
 	adder: RippleCarryAdder
