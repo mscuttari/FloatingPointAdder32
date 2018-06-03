@@ -8,7 +8,7 @@ use ieee.std_logic_1164.all;
 
 entity RippleCarryAdder is
 	generic (
-		n : integer														-- Data size
+		n : integer	:= 8													-- Data size
 	);
 	port (
 		x, y			: in	std_logic_vector(n-1 downto 0);	-- Operands
