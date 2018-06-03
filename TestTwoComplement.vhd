@@ -20,7 +20,7 @@ architecture behavior of TestTwoComplement is
 	end component;
    
    -- Inputs
-   signal x 	: std_logic_vector(0 to 7) := (others => '0');
+   signal x : std_logic_vector(0 to 7) := (others => '0');
 
  	-- Outputs
 	signal y 			: std_logic_vector(0 to 7);
@@ -38,18 +38,25 @@ begin
    stim_proc: process
    begin
 		wait for 100 ns;
+		
 		x <= "11111111";
       wait for 100 ns;
+		
 		x <= "00000000";
 		wait for 100 ns;
+		
 		x <= "01100100";
       wait for 100 ns;
+		
 		x <= "01110101";
 		wait for 100 ns;
+		
 		x <= "00001000";
       wait for 100 ns;
+		
 		x <= "10101010";
       wait for 100 ns;
+		
 		x <= "00100100";
       wait;
    end process;

@@ -7,7 +7,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity TwoComplement is
-	generic ( n : integer);										-- Data size
+	generic ( n : integer );									-- Data size
 	port (
 		x			: 	in 	std_logic_vector(0 to n-1);	-- Input data
 		y			: 	out	std_logic_vector(0 to n-1);	-- Output data
@@ -17,31 +17,29 @@ end TwoComplement;
 
 architecture Behavioral of TwoComplement is
 
-	component RippleCarryAdderN
+	component RippleCarryAdder
 		generic ( n : integer );
 		port (
-			x, y 	: in  	std_logic_vector(0 to n-1);
-			c0		: in 		std_logic;
-			s		: out		std_logic_vector(0 to n-1);
-			c1		: out		std_logic
+			x, y 		: in  	std_logic_vector(0 to n-1);
+			s			: out		std_logic_vector(0 to n-1);
+			overflow	: out		std_logic
 		);
 	end component;
 	
-	signal one 	: std_logic_vector(0 to n-1) := (others => '0');
+	signal one : std_logic_vector(n-1 downto 0) := (0 => '1', others => '0');
 
 begin
-	-- Create signal with value 1
-	one <= one(0 to n-2) & '1';
 	
 	-- Add 1 to the one complement to get the two complement
-	adder: RippleCarryAdderN
-		generic map(n => n)
+	adder: RippleCarryAdder
+		generic map(
+			n => n
+		)
 		port map (
          x => not x,
 			y => one,
-			c0 => '0',
 			s => y,
-			c1 => overflow
+			overflow => overflow
 		);
 	
 end Behavioral;
