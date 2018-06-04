@@ -8,31 +8,32 @@ use ieee.std_logic_1164.all;
 
 entity Main is
 	generic (
-		exponent_size	:	integer	:=	8;				-- Exponent size
-		mantissa_size	:	integer	:=	23				-- Mantissa size
+		operand_size	:	integer;				-- Operand size
+		exponent_size	:	integer;				-- Exponent size
+		mantissa_size	:	integer				-- Mantissa size
 	);
 	port (
-		a, b			: in	std_logic_vector(31 downto 0);		-- Input
-		result		: out	std_logic_vector(31 downto 0)			-- Output
+		a, b			: in	std_logic_vector(operand_size - 1 downto 0);		-- Operands to be added
+		result		: out	std_logic_vector(operand_size - 1 downto 0)		-- Result
 	);
 end Main;
 
 architecture Behavioral of Main is
-
+	
 	-- Operand A
-	signal Sa	:	std_logic;													-- A sign
-	signal Ea	:	std_logic_vector(0 to exponent_size - 1);			-- A exponent
-	signal Ma	:	std_logic_vector(0 to mantissa_size - 1);			-- A mantissa
+	alias Sa is a(operand_size - 1);											-- A sign
+	alias Ea is a((operand_size - 2) downto mantissa_size);			-- A exponent
+	alias Ma is a((mantissa_size - 1) downto 0);							-- A mantissa
 	
 	-- Operand B
-	signal Sb	:	std_logic;													-- B sign
-	signal Eb	:	std_logic_vector(0 to exponent_size - 1);			-- B exponent
-	signal Mb	:	std_logic_vector(0 to mantissa_size - 1);			-- B mantissa
+	alias Sb is b(operand_size - 1);											-- B sign
+	alias Eb is b((operand_size - 2) downto mantissa_size);			-- B exponent
+	alias Mb is b((mantissa_size - 1) downto 0);							-- B mantissa
 	
 	-- Result
-	signal S		: std_logic;													-- Result sign
-	signal E		: std_logic_vector(0 to exponent_size - 1);			-- Result exponent
-	signal M		: std_logic_vector(0 to mantissa_size - 1);			-- Result mantissa
+	alias S is result(operand_size - 1);									-- Result sign
+	alias E is result((operand_size - 2) downto mantissa_size);		-- Result exponent
+	alias M is result((mantissa_size - 1) downto 0);					-- Result mantissa
 	
 	-- Temporary signals
 	signal d			: 	std_logic_vector(0 to exponent_size - 1);		-- Difference between Ea and Eb
@@ -95,17 +96,7 @@ architecture Behavioral of Main is
 	end component;
 
 begin
-	
-	-- Operand A: extract data
-	Sa <= a(31);
-	Ea <= a(30 downto 23);
-	Ma <= a(22 downto 0);
-	
-	-- Operand B: extract data
-	Sb <= b(31);
-	Eb <= b(30 downto 23);
-	Mb <= b(22 downto 0);
-	
+
 	-- Difference between exponents
 	sub_exp: RippleCarrySubtractor
 		generic map ( n => exponent_size )

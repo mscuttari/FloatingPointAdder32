@@ -12,38 +12,37 @@ end TestMain;
 architecture behavior of TestMain is 
 	component Main
 		generic (
-			exponent_size	:	integer;				-- Exponent size
-			mantissa_size	:	integer				-- Mantissa size
+			operand_size	:	integer;
+			exponent_size	:	integer;
+			mantissa_size	:	integer
 		);
 		port (
-			a, b			: in	std_logic_vector(31 downto 0);		-- Input
-			result		: out	std_logic_vector(31 downto 0);		-- Output
-			prova			: out std_logic_vector(0 to 7)
+			a, b			: in	std_logic_vector(operand_size - 1 downto 0);
+			result		: out	std_logic_vector(operand_size - 1 downto 0)
 		);
 	end component;
 	
 	   -- Inputs
    signal a, b 	: std_logic_vector(31 downto 0) := (others => '0');
 	signal result 	: std_logic_vector(31 downto 0);
-	signal prova	: std_logic_vector(0 to 7);
 	
 begin
 	uut: Main
 		generic map (
+			operand_size => 32,
 			exponent_size => 8,
 			mantissa_size => 23
 		)
 		port map (
 			a => a,
          b => b,
-         result => result,
-         prova => prova
+         result => result
 		);
 
 	stim_proc: process
    begin
 		a <= "11000001101110101000000000000000";
-		b <= "11000011101110101000000000000000";
+		b <= "11000011101110101000000000111111";
       wait;
    end process;
 
