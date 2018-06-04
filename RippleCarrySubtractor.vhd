@@ -8,7 +8,7 @@ use ieee.std_logic_1164.all;
 
 entity RippleCarrySubtractor is
 	generic (
-		n : integer														-- Data size
+		n : integer	:= 8														-- Data size
 	);
 	port (
 		x, y			: in	std_logic_vector(n-1 downto 0);	-- Operands
@@ -30,7 +30,7 @@ architecture Behavioral of RippleCarrySubtractor is
 	end component;
 	
 	-- Vector of carries
-	signal carries 	: 	std_logic_vector(n downto 0);
+	signal carries : std_logic_vector(n downto 0);
 
 begin
 
