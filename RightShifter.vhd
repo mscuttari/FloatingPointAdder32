@@ -8,8 +8,8 @@ use ieee.std_logic_1164.all;
 
 entity RightShifter is
 	generic (
-		n 	: 	integer;					-- Data size. Default: 23 (mantissa size)
-		s 	:	integer					-- Shift amount. Default: 1
+		n 	: 	integer;					-- Data size
+		s 	:	integer					-- Shift amount
 	);					
 	port (
 		x	: in 	std_logic_vector(0 to n-1);	-- Input data

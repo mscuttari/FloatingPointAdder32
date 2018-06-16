@@ -8,7 +8,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity SwapN is
-	generic ( n : integer := 23);						-- Data size. Default size: 23 (mantissa size)
+	generic (
+		n : integer											-- Data size
+	);
 	port (
 		swap	: in	std_logic;							-- Control signal
 		x, y	: in 	std_logic_vector(0 to n-1);	-- Input data

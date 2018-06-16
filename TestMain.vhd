@@ -11,28 +11,18 @@ end TestMain;
  
 architecture behavior of TestMain is 
 	component Main
-		generic (
-			operand_size	:	integer;
-			exponent_size	:	integer;
-			mantissa_size	:	integer
-		);
 		port (
-			a, b			: in	std_logic_vector(operand_size - 1 downto 0);
-			result		: out	std_logic_vector(operand_size - 1 downto 0)
+			a, b			: in	std_logic_vector(31 downto 0);
+			result		: out	std_logic_vector(31 downto 0)
 		);
 	end component;
 	
-	   -- Inputs
+	-- Inputs
    signal a, b 	: std_logic_vector(31 downto 0) := (others => '0');
 	signal result 	: std_logic_vector(31 downto 0);
 	
 begin
 	uut: Main
-		generic map (
-			operand_size => 32,
-			exponent_size => 8,
-			mantissa_size => 23
-		)
 		port map (
 			a => a,
          b => b,
