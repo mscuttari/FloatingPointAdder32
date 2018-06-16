@@ -21,43 +21,38 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity ParticularCaseAssignation is
-	generic (
-		operand_size	:	integer;				-- Operand size
-		exponent_size	:	integer;				-- Exponent size
-		mantissa_size	:	integer				-- Mantissa size
-	);
 	port (
-		a			:	in 	std_logic_vector(operand_size - 1 downto 0);		-- First operand
-		b			:	in 	std_logic_vector(operand_size - 1 downto 0);		-- Second operand
+		a			:	in 	std_logic_vector(31 downto 0);		-- First operand
+		b			:	in 	std_logic_vector(31 downto 0);		-- Second operand
 		enable	:	out	std_logic;													-- Enable signal
-		result	:	out	std_logic_vector(operand_size - 1 downto 0)		-- Result
+		result	:	out	std_logic_vector(31 downto 0)		-- Result
 	);
 end ParticularCaseAssignation;
 
 architecture Behavioral of ParticularCaseAssignation is
 
 	-- Operand A
-	alias Sa is a(operand_size - 1);											-- A sign
-	alias Ea is a((operand_size - 2) downto mantissa_size);			-- A exponent
-	alias Ma is a((mantissa_size - 1) downto 0);							-- A mantissa
+	alias Sa is a(31);						-- A sign
+	alias Ea is a(30 downto 23);			-- A exponent
+	alias Ma is a(22 downto 0);			-- A mantissa
 	
 	-- Operand B
-	alias Sb is b(operand_size - 1);											-- B sign
-	alias Eb is b((operand_size - 2) downto mantissa_size);			-- B exponent
-	alias Mb is b((mantissa_size - 1) downto 0);							-- B mantissa
+	alias Sb is b(31);						-- B sign
+	alias Eb is b(30 downto 23);			-- B exponent
+	alias Mb is b(22 downto 0);			-- B mantissa
 	
 	-- Result
-	alias S is result(operand_size - 1);									-- Result sign
-	alias E is result((operand_size - 2) downto mantissa_size);		-- Result exponent
-	alias M is result((mantissa_size - 1) downto 0);					-- Result mantissa
+	alias S is result(31);					-- Result sign
+	alias E is result(30 downto 23);		-- Result exponent
+	alias M is result(22 downto 0);		-- Result mantissa
 
 begin
 	
 	process (a, b)
 	begin
 		-- 0 + anything = anything
-		if (	Ea = ((operand_size - 2) downto mantissa_size => '0') and
-				Ma = ((mantissa_size - 1) downto 0 => '0')) then
+		if (	Ea = (30 downto 23 => '0') and
+				Ma = (22 downto 0 => '0')) then
 			
 			enable <= '1';
 			S <= Sb;
@@ -65,8 +60,8 @@ begin
 			M <= Mb;
 			
 		-- anything + 0 = anything
-		elsif (	Eb = ((operand_size - 2) downto mantissa_size => '0') and
-					Mb = ((mantissa_size - 1) downto 0 => '0')) then
+		elsif (	Eb = (30 downto 23 => '0') and
+					Mb = (22 downto 0 => '0')) then
 			
 			enable <= '1';
 			S <= Sa;
@@ -75,11 +70,11 @@ begin
 			
 		-- + Infinity + Infinity = + Infinity
 		elsif (	Sa = '0' and
-				Ea = ((operand_size - 2) downto mantissa_size => '1') and
-				Ma = ((mantissa_size - 1) downto 0 => '0') and
+				Ea = (30 downto 23 => '1') and
+				Ma = (22 downto 0 => '0') and
 				Sb = '0' and
-				Eb = ((operand_size - 2) downto mantissa_size => '1') and
-				Mb = ((mantissa_size - 1) downto 0 => '0')) then
+				Eb = (30 downto 23 => '1') and
+				Mb = (22 downto 0 => '0')) then
 			
 			enable <= '1';
 			S <= '0';
@@ -88,11 +83,11 @@ begin
 		
 		-- - Infinity - Infinity = - Infinity
 		elsif (	Sa = '1' and
-					Ea = ((operand_size - 2) downto mantissa_size => '1') and
-					Ma = ((mantissa_size - 1) downto 0 => '0') and
+					Ea = (30 downto 23 => '1') and
+					Ma = (22 downto 0 => '0') and
 					Sb = '1' and
-					Eb = ((operand_size - 2) downto mantissa_size => '1') and
-					Mb = ((mantissa_size - 1) downto 0 => '0')) then
+					Eb = (30 downto 23 => '1') and
+					Mb = (22 downto 0 => '0')) then
 			
 			enable <= '1';
 			S <= '1';
@@ -101,11 +96,11 @@ begin
 			
 		-- + Infinity - Infinity = NaN
 		elsif (	Sa = '0' and
-					Ea = ((operand_size - 2) downto mantissa_size => '1') and
-					Ma = ((mantissa_size - 1) downto 0 => '0') and
+					Ea = (30 downto 23 => '1') and
+					Ma = (22 downto 0 => '0') and
 					Sb = '1' and
-					Eb = ((operand_size - 2) downto mantissa_size => '1') and
-					Mb = ((mantissa_size - 1) downto 0 => '0')) then
+					Eb = (30 downto 23 => '1') and
+					Mb = (22 downto 0 => '0')) then
 			
 			enable <= '1';
 			S <= '0';
@@ -114,11 +109,11 @@ begin
 		
 		-- - Infinity + Infinity = NaN
 		elsif (	Sa = '1' and
-					Ea = ((operand_size - 2) downto mantissa_size => '1') and
-					Ma = ((mantissa_size - 1) downto 0 => '0') and
+					Ea = (30 downto 23 => '1') and
+					Ma = (22 downto 0 => '0') and
 					Sb = '0' and
-					Eb = ((operand_size - 2) downto mantissa_size => '1') and
-					Mb = ((mantissa_size - 1) downto 0 => '0')) then
+					Eb = (30 downto 23 => '1') and
+					Mb = (22 downto 0 => '0')) then
 			
 			enable <= '1';
 			S <= '0';
@@ -126,7 +121,7 @@ begin
 			M <= (0 => '1', others => '0');
 		
 		-- NaN + anything = NaN
-		elsif (Ea = ((operand_size - 2) downto mantissa_size => '1')) then
+		elsif (Ea = (30 downto 23 => '1')) then
 			
 			enable <= '1';
 			S <= '0';
@@ -134,7 +129,7 @@ begin
 			M <= (0 => '1', others => '0');
 		
 		-- anything + NaN = NaN
-		elsif (Eb = ((operand_size - 2) downto mantissa_size => '1')) then
+		elsif (Eb = (30 downto 23 => '1')) then
 			
 			enable <= '1';
 			S <= '0';
@@ -144,8 +139,8 @@ begin
 		else
 			enable <= '0';
 			S <= '-';
-			E <= ((operand_size - 2) downto mantissa_size => '-');
-			M <= ((mantissa_size - 1) downto 0 => '-');
+			E <= (30 downto 23 => '-');
+			M <= (22 downto 0 => '-');
 		end if;
 	end process;
 	

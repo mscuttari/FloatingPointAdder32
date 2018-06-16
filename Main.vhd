@@ -7,44 +7,39 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity Main is
-	generic (
-		operand_size	:	integer;				-- Operand size
-		exponent_size	:	integer;				-- Exponent size
-		mantissa_size	:	integer				-- Mantissa size
-	);
 	port (
-		a, b			: in	std_logic_vector(operand_size - 1 downto 0);		-- Operands to be added
-		result		: out	std_logic_vector(operand_size - 1 downto 0)		-- Result
+		a, b			: in	std_logic_vector(31 downto 0);	-- Operands to be added
+		result		: out	std_logic_vector(31 downto 0)		-- Result
 	);
 end Main;
 
 architecture Behavioral of Main is
 	
 	-- Operand A
-	alias Sa is a(operand_size - 1);											-- A sign
-	alias Ea is a((operand_size - 2) downto mantissa_size);			-- A exponent
-	alias Ma is a((mantissa_size - 1) downto 0);							-- A mantissa
+	alias Sa is a(31);						-- A sign
+	alias Ea is a(30 downto 23);			-- A exponent
+	alias Ma is a(22 downto 0);			-- A mantissa
 	
 	-- Operand B
-	alias Sb is b(operand_size - 1);											-- B sign
-	alias Eb is b((operand_size - 2) downto mantissa_size);			-- B exponent
-	alias Mb is b((mantissa_size - 1) downto 0);							-- B mantissa
+	alias Sb is b(31);						-- B sign
+	alias Eb is b(30 downto 23);			-- B exponent
+	alias Mb is b(22 downto 0);			-- B mantissa
 	
 	-- Result
-	alias S is result(operand_size - 1);									-- Result sign
-	alias E is result((operand_size - 2) downto mantissa_size);		-- Result exponent
-	alias M is result((mantissa_size - 1) downto 0);					-- Result mantissa
+	alias S is result(31);					-- Result sign
+	alias E is result(30 downto 23);		-- Result exponent
+	alias M is result(22 downto 0);		-- Result mantissa
 	
 	-- Temporary signals
-	signal d			: 	std_logic_vector(0 to exponent_size - 1);		-- Difference between Ea and Eb
-	signal d_abs	:	std_logic_vector(0 to exponent_size - 1);		-- Absolute value of d
-	signal Memin	:	std_logic_vector(0 to mantissa_size - 1);		-- Mantissa corresponding to the lowest exponent
-	signal M1		:	std_logic_vector(0 to mantissa_size - 1);		-- Memin aligned with Memax (= M2)
-	signal M2		:	std_logic_vector(0 to mantissa_size - 1);		-- Mantissa corresponding to the higher exponent
-	signal M12S		:	std_logic_vector(0 to mantissa_size - 1);		-- Sum between M1 and M2
-	signal M12D		:	std_logic_vector(0 to mantissa_size - 1);		-- Difference between M1 and M2
-	signal S1		: 	std_logic;												-- Sign corresponding to the higher exponent
-	signal S2		:	std_logic;												-- Sign corresponding to the lower exponent
+	signal d			: 	std_logic_vector(0 to 7);		-- Difference between Ea and Eb
+	signal d_abs	:	std_logic_vector(0 to 7);		-- Absolute value of d
+	signal Memin	:	std_logic_vector(0 to 22);		-- Mantissa corresponding to the lowest exponent
+	signal M1		:	std_logic_vector(0 to 22);		-- Memin aligned with Memax (= M2)
+	signal M2		:	std_logic_vector(0 to 22);		-- Mantissa corresponding to the higher exponent
+	signal M12S		:	std_logic_vector(0 to 22);		-- Sum between M1 and M2
+	signal M12D		:	std_logic_vector(0 to 22);		-- Difference between M1 and M2
+	signal S1		: 	std_logic;							-- Sign corresponding to the higher exponent
+	signal S2		:	std_logic;							-- Sign corresponding to the lower exponent
 	
 	
 	-- AbsoluteValue
@@ -99,7 +94,7 @@ begin
 
 	-- Difference between exponents
 	sub_exp: RippleCarrySubtractor
-		generic map ( n => exponent_size )
+		generic map ( n => 8 )
 		port map (
          x => Ea,
 			y => Eb,
@@ -108,7 +103,7 @@ begin
 	
 	-- Swap mantissas if needed
 	swap_exp: SwapN
-		generic map ( n => mantissa_size )
+		generic map ( n => 23 )
 		port map (
 			swap => d(0),
 			x => Ma,
@@ -119,7 +114,7 @@ begin
 	
 	-- Calculate |d|
 	abs_d: AbsoluteValue
-		generic map ( n => exponent_size )
+		generic map ( n => 8 )
 		port map (
          x => d,
 			y => d_abs
@@ -129,13 +124,13 @@ begin
 	mantissa_right_shifter: MantissaRightShifter
 		port map (
 			x => Memin,
-			pos => d_abs(exponent_size - 5 to exponent_size - 1),
+			pos => d_abs(3 to 7),
 			y => M1
 		);
 	
 	-- Sum of M1 and M2
 	adder_m12: RippleCarryAdder
-		generic map ( n => mantissa_size )
+		generic map ( n => 23 )
 		port map (
          x => M1,
 			y => M2,
@@ -144,7 +139,7 @@ begin
 	
 	-- Difference between M1 and M2
 	sub_mantissa: RippleCarrySubtractor
-		generic map ( n => mantissa_size )
+		generic map ( n => 23 )
 		port map (
          x => M1,
 			y => M2,
@@ -161,8 +156,5 @@ begin
 	-- Result sign
 	S <=  S2 when M12D(0) = '1' else
 			S1;
-	
-	-- Compose result
-	result <= S & E & M;
 
 end Behavioral;

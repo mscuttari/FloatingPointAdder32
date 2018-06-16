@@ -11,16 +11,11 @@ end TestParticularCaseAssignation;
  
 architecture behavior of TestParticularCaseAssignation is 
 	component ParticularCaseAssignation
-		generic (
-			operand_size	:	integer;
-			exponent_size	:	integer;
-			mantissa_size	:	integer
-		);
 		port (
-			a			:	in 	std_logic_vector(operand_size - 1 downto 0);
-			b			:	in 	std_logic_vector(operand_size - 1 downto 0);
+			a			:	in 	std_logic_vector(31 downto 0);
+			b			:	in 	std_logic_vector(31 downto 0);
 			enable	:	out	std_logic;
-			result	:	out	std_logic_vector(operand_size - 1 downto 0)
+			result	:	out	std_logic_vector(31 downto 0)
 		);
 	end component;
    

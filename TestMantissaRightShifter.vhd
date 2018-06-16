@@ -11,26 +11,27 @@ end TestMantissaRightShifter;
  
 architecture behavior of TestMantissaRightShifter is 
 	 
-    COMPONENT MantissaRightShifter
-    PORT(
-         x : IN  std_logic_vector(0 to 22);
-         pos : IN  std_logic_vector(0 to 4);
-         y : OUT  std_logic_vector(0 to 22)
+    component MantissaRightShifter
+    port(
+         x 		: in		std_logic_vector(0 to 22);
+         pos 	: in  	std_logic_vector(0 to 4);
+         y 		: out  	std_logic_vector(0 to 22)
         );
-    END COMPONENT;
+    end component;
     
    -- Inputs
-   signal x : std_logic_vector(0 to 22) := (others => '0');
-   signal pos : std_logic_vector(0 to 4) := (others => '0');
+   signal x 	: 	std_logic_vector(0 to 22) 	:=	(others => '0');
+   signal pos 	: 	std_logic_vector(0 to 4) 	:=	(others => '0');
 
  	-- Outputs
    signal y : std_logic_vector(0 to 22);
 
 begin
-   uut: MantissaRightShifter PORT MAP (
-          x => x,
-          pos => pos,
-          y => y
+   uut: MantissaRightShifter
+		port map (
+          x 	=>	x,
+          pos 	=>	pos,
+          y 	=>	y
         );
 
    stim_proc: process

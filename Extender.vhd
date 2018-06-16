@@ -3,8 +3,8 @@
 -- Project Name: 		32 bit floating point adder
 -- Description: 		extends an input n-bit vector to an output s-bit vector
 ----------------------------------------------------------------------------------
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.ALL;
 
 entity Extender is
 	generic (
