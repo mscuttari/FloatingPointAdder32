@@ -8,153 +8,103 @@ use ieee.std_logic_1164.all;
 
 entity Main is
 	port (
-		a, b			: in	std_logic_vector(31 downto 0);	-- Operands to be added
-		result		: out	std_logic_vector(31 downto 0)		-- Result
+		CLK			: 	in		std_logic;									-- Clock signal
+		a, b			: 	in		std_logic_vector(31 downto 0);		-- Operands to be added
+		result		: 	out	std_logic_vector(31 downto 0);		-- Result
+		
+		-- Debug stage 1
+		stg1_operand_1				:	out	std_logic_vector(31 downto 0);
+		stg1_operand_2				:	out	std_logic_vector(31 downto 0);
+		stg1_d 						:	out 	std_logic_vector(0 to 7);
+		stg1_d_abs 					: 	out	std_logic_vector(0 to 7);
+		
+		-- Debug stage 2
+		stg2_sum						:	out	std_logic_vector(31 downto 0);
+		stg2_operand_1				:	out	std_logic_vector(31 downto 0);
+		stg2_operand_1_shifted	:	out	std_logic_vector(31 downto 0);
+		stg2_operand_2				:	out	std_logic_vector(31 downto 0);
+		stg2_d 						:	out 	std_logic_vector(0 to 7);
+		stg2_d_abs 					: 	out	std_logic_vector(0 to 7)
 	);
 end Main;
 
 architecture Behavioral of Main is
 	
-	-- Operand A
-	alias Sa is a(31);						-- A sign
-	alias Ea is a(30 downto 23);			-- A exponent
-	alias Ma is a(22 downto 0);			-- A mantissa
-	
-	-- Operand B
-	alias Sb is b(31);						-- B sign
-	alias Eb is b(30 downto 23);			-- B exponent
-	alias Mb is b(22 downto 0);			-- B mantissa
-	
-	-- Result
-	alias S is result(31);					-- Result sign
-	alias E is result(30 downto 23);		-- Result exponent
-	alias M is result(22 downto 0);		-- Result mantissa
-	
 	-- Temporary signals
-	signal d			: 	std_logic_vector(0 to 7);		-- Difference between Ea and Eb
-	signal d_abs	:	std_logic_vector(0 to 7);		-- Absolute value of d
-	signal Memin	:	std_logic_vector(0 to 22);		-- Mantissa corresponding to the lowest exponent
-	signal M1		:	std_logic_vector(0 to 22);		-- Memin aligned with Memax (= M2)
-	signal M2		:	std_logic_vector(0 to 22);		-- Mantissa corresponding to the higher exponent
-	signal M12S		:	std_logic_vector(0 to 22);		-- Sum between M1 and M2
-	signal M12D		:	std_logic_vector(0 to 22);		-- Difference between M1 and M2
-	signal S1		: 	std_logic;							-- Sign corresponding to the higher exponent
-	signal S2		:	std_logic;							-- Sign corresponding to the lower exponent
+	signal stage1_operand_1	:	std_logic_vector(31 downto 0);	-- Operand with the highest exponent
+	signal stage1_operand_2	:	std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
+	signal stage1_d 			: 	std_logic_vector(0 to 7); 			-- Difference between operand A and operand B exponents
+	signal stage1_d_abs 		: 	std_logic_vector(0 to 7); 			-- Difference between the highest exponent and the lowest exponent
 	
+	signal stage2_sum			:	std_logic_vector(31 downto 0);	-- Operand 1 + Operand 2
 	
-	-- AbsoluteValue
-	component AbsoluteValue
-		generic ( n : integer );
+	-- Stage 1
+	component StageOne
 		port (
-			x			: 	in 	std_logic_vector(0 to n-1);
-			y			: 	out	std_logic_vector(0 to n-1)
+			CLK						:	in		std_logic;
+			a, b						:	in		std_logic_vector(31 downto 0);
+			operand_1				:	out	std_logic_vector(31 downto 0);
+			operand_2				:	out	std_logic_vector(31 downto 0);
+			exp_difference			:	out	std_logic_vector(0 to 7);
+			exp_difference_abs	:	out	std_logic_vector(0 to 7)
 		);
 	end component;
 	
-	-- Ripple carry adder
-	component RippleCarryAdder
-		generic ( n : integer );
+	-- Stage 2
+	component StageTwo
 		port (
-			x, y 		: in  	std_logic_vector(0 to n-1);
-			s			: out		std_logic_vector(0 to n-1);
-			overflow	: out		std_logic
+			CLK							:	in		std_logic;
+			operand_1_in				:	in		std_logic_vector(31 downto 0);
+			operand_2_in				:	in		std_logic_vector(31 downto 0);
+			exp_difference_in			:	in		std_logic_vector(0 to 7);
+			exp_difference_abs_in	:	in		std_logic_vector(0 to 7);
+			sum							:	out	std_logic_vector(31 downto 0);
+			operand_1_out				:	out	std_logic_vector(31 downto 0);
+			operand_1_shifted			:	out	std_logic_vector(31 downto 0);
+			operand_2_out				:	out	std_logic_vector(31 downto 0);
+			exp_difference_out		:	out	std_logic_vector(0 to 7);
+			exp_difference_abs_out	:	out	std_logic_vector(0 to 7)
 		);
 	end component;
 	
-	-- Ripple carry subtractor
-	component RippleCarrySubtractor
-		generic ( n : integer );
-		port (
-			x, y 			: in  	std_logic_vector(0 to n-1);
-			s				: out		std_logic_vector(0 to n-1);
-			underflow	: out		std_logic
-		);
-	end component;
-	
-	-- Swap module
-	component SwapN
-		generic ( n : integer );
-		port (
-			swap	: in	std_logic;
-			x, y	: in 	std_logic_vector(0 to n-1);
-			a, b	: out	std_logic_vector(0 to n-1)
-		);
-	end component;
-	
-	-- Mantissa right shifter
-	component MantissaRightShifter
-		port (
-			x		: in 	std_logic_vector(0 to 22);
-			pos	: in	std_logic_vector(0 to 4);
-			y		: out	std_logic_vector(0 to 22)
-		);
-	end component;
-
 begin
 
-	-- Difference between exponents
-	sub_exp: RippleCarrySubtractor
-		generic map ( n => 8 )
+	-- Stage 1
+	stage_one: StageOne
 		port map (
-         x => Ea,
-			y => Eb,
-			s => d
+			CLK 						=> CLK,
+			a							=>	a,
+			b							=>	b,
+			operand_1				=>	stage1_operand_1,
+			operand_2				=>	stage1_operand_2,
+			exp_difference			=>	stage1_d,
+			exp_difference_abs	=>	stage1_d_abs
 		);
 	
-	-- Swap mantissas if needed
-	swap_exp: SwapN
-		generic map ( n => 23 )
+	-- Stage 2
+	stage_two: StageTwo
 		port map (
-			swap => d(0),
-			x => Ma,
-			y => Mb,
-			a => M2,
-			b => Memin
+			CLK 							=>	CLK,
+			operand_1_in 				=>	stage1_operand_1,
+			operand_2_in 				=>	stage1_operand_2,
+			exp_difference_in			=>	stage1_d,
+			exp_difference_abs_in 	=> stage1_d_abs,
+			sum							=>	stage2_sum,
+			operand_1_out				=>	stg2_operand_1,
+			operand_1_shifted			=>	stg2_operand_1_shifted,
+			operand_2_out				=>	stg2_operand_2,
+			exp_difference_out		=>	stg2_d,
+			exp_difference_abs_out	=>	stg2_d_abs
 		);
 	
-	-- Calculate |d|
-	abs_d: AbsoluteValue
-		generic map ( n => 8 )
-		port map (
-         x => d,
-			y => d_abs
-		);
+	result <= stage2_sum;
 	
-	-- Mantissa right shifter
-	mantissa_right_shifter: MantissaRightShifter
-		port map (
-			x => Memin,
-			pos => d_abs(3 to 7),
-			y => M1
-		);
+	-- Debug signals
+	stg1_operand_1				<=	stage1_operand_1;
+	stg1_operand_2				<=	stage1_operand_2;
+	stg1_d						<=	stage1_d;
+	stg1_d_abs 					<=	stage1_d_abs;
 	
-	-- Sum of M1 and M2
-	adder_m12: RippleCarryAdder
-		generic map ( n => 23 )
-		port map (
-         x => M1,
-			y => M2,
-			s => M12S
-		);
-	
-	-- Difference between M1 and M2
-	sub_mantissa: RippleCarrySubtractor
-		generic map ( n => 23 )
-		port map (
-         x => M1,
-			y => M2,
-			s => M12D
-		);
-	
-	-- Swap signs if needed
-	S1 <= Sb when d(0) = '1' else
-			Sa;
-	
-	S2 <= Sa when d(0) = '1' else
-			Sb;
-	
-	-- Result sign
-	S <=  S2 when M12D(0) = '1' else
-			S1;
+	stg2_sum						<=	stage2_sum;
 
 end Behavioral;

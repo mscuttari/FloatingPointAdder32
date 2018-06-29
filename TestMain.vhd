@@ -8,32 +8,90 @@ use ieee.std_logic_1164.all;
 
 entity TestMain is
 end TestMain;
- 
+
 architecture behavior of TestMain is 
 	component Main
 		port (
-			a, b			: in	std_logic_vector(31 downto 0);
-			result		: out	std_logic_vector(31 downto 0)
+			CLK							: 	in		std_logic;
+			a, b							: 	in		std_logic_vector(31 downto 0);
+			result						: 	out	std_logic_vector(31 downto 0);
+		
+			stg1_operand_1				:	out	std_logic_vector(31 downto 0);
+			stg1_operand_2				:	out	std_logic_vector(31 downto 0);
+			stg1_d 						:	out 	std_logic_vector(0 to 7);
+			stg1_d_abs 					: 	out	std_logic_vector(0 to 7);
+			
+			stg2_sum						:	out	std_logic_vector(31 downto 0);
+			stg2_operand_1				:	out	std_logic_vector(31 downto 0);
+			stg2_operand_1_shifted	:	out	std_logic_vector(31 downto 0);
+			stg2_operand_2				:	out	std_logic_vector(31 downto 0);
+			stg2_d 						:	out 	std_logic_vector(0 to 7);
+			stg2_d_abs 					: 	out	std_logic_vector(0 to 7)
 		);
 	end component;
 	
-	-- Inputs
-   signal a, b 	: std_logic_vector(31 downto 0) := (others => '0');
-	signal result 	: std_logic_vector(31 downto 0);
+	-- Data signals
+	signal CLK 					: std_logic := '0';
+   signal a, b 				: std_logic_vector(31 downto 0) := (others => '0');
+	signal result 				: std_logic_vector(31 downto 0);
+	
+	-- Debug
+	signal stage1_operand_1	:	std_logic_vector(31 downto 0);
+	signal stage1_operand_2	:	std_logic_vector(31 downto 0);
+	signal stage1_d 			: 	std_logic_vector(0 to 7);
+	signal stage1_d_abs 		: 	std_logic_vector(0 to 7);
+	
+	signal stage2_sum						:	std_logic_vector(31 downto 0);
+	signal stage2_operand_1				:	std_logic_vector(31 downto 0);
+	signal stage2_operand_1_shifted	:	std_logic_vector(31 downto 0);
+	signal stage2_operand_2				:	std_logic_vector(31 downto 0);
+	signal stage2_d 						: 	std_logic_vector(0 to 7);
+	signal stage2_d_abs 					: 	std_logic_vector(0 to 7);
+	
+   -- Clock period
+   constant CLK_period : time := 100 ns;
 	
 begin
+	-- Clock definition
+   CLK_process: process
+   begin
+		CLK <= '0';
+		wait for CLK_period / 2;
+		CLK <= '1';
+		wait for CLK_period / 2;
+   end process;
+	
 	uut: Main
 		port map (
-			a => a,
-         b => b,
-         result => result
+			CLK 		=> CLK,
+			a 			=> a,
+         b 			=> b,
+         result	=> result,
+			
+			stg1_operand_1		=>	stage1_operand_1,
+			stg1_operand_2		=>	stage1_operand_2,
+			stg1_d 				=>	stage1_d,
+			stg1_d_abs 			=>	stage1_d_abs,
+			
+			stg2_sum						=>	stage2_sum,
+			stg2_operand_1				=>	stage2_operand_1,
+			stg2_operand_1_shifted	=>	stage2_operand_1_shifted,
+			stg2_operand_2				=>	stage2_operand_2,
+			stg2_d 						=>	stage2_d,
+			stg2_d_abs 					=>	stage2_d_abs
 		);
-
-	stim_proc: process
+	
+   stim_proc: process
    begin
+		wait for CLK_period * 3;
+		
 		a <= "11000001101110101000000000000000";
 		b <= "11000011101110101000000000111111";
-      wait;
+		wait for CLK_period * 5;
+		
+		a <= "11000011101110101000000000111111";
+		b <= "11000001101110101000000000000000";
+		wait;
    end process;
 
 end;
