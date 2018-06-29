@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Module Name:    	Stage1
+-- Module Name:    	StageOne
 -- Project Name: 		32 bit floating point adder
 -- Description: 		Stage one of the pipeline
 ----------------------------------------------------------------------------------
@@ -8,23 +8,29 @@ use ieee.std_logic_1164.all;
 
 entity StageOne is
 	port (
-		CLK						: in	std_logic;								-- Clock signal
-		a, b						: in	std_logic_vector(31 downto 0);	-- Operands
-		operand_1				: out	std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
-		operand_2				: out	std_logic_vector(31 downto 0);	-- Operand with the highest exponent
-		exp_difference			: out std_logic_vector(0 to 7);			-- Difference between operand A and operand B exponents
-		exp_difference_abs	: out	std_logic_vector(0 to 7)			-- Difference between the highest and the lowest exponent
+		CLK						: 	in		std_logic;								-- Clock signal
+		a, b						: 	in		std_logic_vector(31 downto 0);	-- Operands
+		special_case_flag		:	out	std_logic;								-- Whether the operands leads to a special case
+		special_case_result	:	out	std_logic_vector(31 downto 0);	-- Special case result
+		operand_1				: 	out	std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
+		operand_2				: 	out	std_logic_vector(31 downto 0);	-- Operand with the highest exponent
+		exp_difference			: 	out 	std_logic_vector(0 to 7);			-- Difference between operand A and operand B exponents
+		exp_difference_abs	: 	out	std_logic_vector(0 to 7)			-- Difference between the highest and the lowest exponent
 	);
 end StageOne;
 
 architecture Behavioral of StageOne is
+	
+	constant registers_number : integer := 113;
 
 	-- Temporary signals
 	-- "_dff" is used to indicate the signal before entering the registers
-	signal operand_1_dff				:	std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
-	signal operand_2_dff				:	std_logic_vector(31 downto 0);	-- Operand with the highest exponent
-	signal exp_difference_dff		: 	std_logic_vector(0 to 7);			-- Difference between operand A and operand B exponents
-	signal exp_difference_abs_dff	:	std_logic_vector(0 to 7);			-- Absolute value of exp_difference_dff
+	signal special_case_flag_dff		:	std_logic;								-- Whether the operands leads to a special case
+	signal special_case_result_dff	:	std_logic_vector(31 downto 0);	-- Special case result
+	signal operand_1_dff					:	std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
+	signal operand_2_dff					:	std_logic_vector(31 downto 0);	-- Operand with the highest exponent
+	signal exp_difference_dff			: 	std_logic_vector(0 to 7);			-- Difference between operand A and operand B exponents
+	signal exp_difference_abs_dff		:	std_logic_vector(0 to 7);			-- Absolute value of exp_difference_dff
 	
 	-- Operand A
 	alias sign_A is a(31);
@@ -37,7 +43,7 @@ architecture Behavioral of StageOne is
 	alias mantissa_B is b(22 downto 0);
 	
 	-- Registers
-	signal D, Q : std_logic_vector(0 to 79);
+	signal D, Q : std_logic_vector(0 to registers_number - 1);
 	
 	component RegisterN
 		generic (
@@ -47,6 +53,16 @@ architecture Behavioral of StageOne is
 			CLK	:	in		std_logic;
 			D		: 	in 	std_logic_vector(0 to n-1);
 			Q		: 	out	std_logic_vector(0 to n-1)
+		);
+	end component;
+	
+	-- Particular cases
+	component ParticularCaseAssignation
+		port (
+			a			:	in 	std_logic_vector(31 downto 0);
+			b			:	in 	std_logic_vector(31 downto 0);
+			enable	:	out	std_logic;
+			result	:	out	std_logic_vector(31 downto 0)
 		);
 	end component;
 	
@@ -87,6 +103,15 @@ architecture Behavioral of StageOne is
 
 begin
 	
+	-- Special cases management
+	special_cases: ParticularCaseAssignation
+		port map (
+         a 			=>	a,
+			b 			=>	b,
+			enable 	=>	special_case_flag_dff,
+			result 	=>	special_case_result_dff
+		);
+	
 	-- Difference between exponents
 	sub_exp: RippleCarrySubtractor
 		generic map (
@@ -124,7 +149,7 @@ begin
 	-- Connect the registers
 	registers: RegisterN
 		generic map (
-			n => 80
+			n => registers_number
 		)
 		port map (
          CLK => CLK,
@@ -132,14 +157,18 @@ begin
 			Q => Q
 		);
 	
-	D <= 	operand_1_dff &
+	D <= 	special_case_flag_dff &
+			special_case_result_dff &
+			operand_1_dff &
 			operand_2_dff &
 			exp_difference_dff &
 			exp_difference_abs_dff;
 	
-	operand_1 <= Q(0 to 31);
-	operand_2 <= Q(32 to 63);
-	exp_difference <= Q(64 to 71);
-	exp_difference_abs <= Q(72 to 79);
+	special_case_flag <= Q(0);
+	special_case_result <= Q(1 to 32);
+	operand_1 <= Q(33 to 64);
+	operand_2 <= Q(65 to 96);
+	exp_difference <= Q(97 to 104);
+	exp_difference_abs <= Q(105 to 112);
 	
 end Behavioral;

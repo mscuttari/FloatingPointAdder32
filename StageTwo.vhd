@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Module Name:    	Stage2
+-- Module Name:    	StageTwo
 -- Project Name: 		32 bit floating point adder
 -- Description: 		Stage two of the pipeline
 ----------------------------------------------------------------------------------
@@ -9,24 +9,25 @@ use ieee.std_logic_1164.all;
 entity StageTwo is
 	port (
 		CLK							:	in		std_logic;								-- Clock signal
+		special_case_flag_in		:	in		std_logic;								-- Whether the operands leads to a special case
+		special_case_result_in	:	in		std_logic_vector(31 downto 0);	-- Special case result
 		operand_1_in				:	in		std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
 		operand_2_in				:	in		std_logic_vector(31 downto 0);	-- Operand with the highest exponent
 		exp_difference_in			:	in		std_logic_vector(0 to 7);			-- Difference between operand A and operand B exponents
 		exp_difference_abs_in	:	in		std_logic_vector(0 to 7);			-- Difference between the highest and the lowest exponent
+		special_case_flag_out	:	out	std_logic;								-- special_case_flag
+		special_case_result_out	:	out	std_logic_vector(31 downto 0);	-- special_case_result
 		sum							:	out	std_logic_vector(31 downto 0);	-- Sum between the two operands
 		
 		-- Debug
 		operand_1_out				:	out	std_logic_vector(31 downto 0);	-- operand_1_in
-		operand_1_shifted			:	out	std_logic_vector(31 downto 0);	-- operand_1_in with shifted mantissa
-		operand_2_out				:	out	std_logic_vector(31 downto 0);	-- operand_2_in
-		exp_difference_out		:	out	std_logic_vector(0 to 7);			-- exp_difference_in
-		exp_difference_abs_out	:	out	std_logic_vector(0 to 7)			-- exp_difference_abs_in
+		operand_1_shifted			:	out	std_logic_vector(31 downto 0)	-- operand_1_in with shifted mantissa
 	);
 end StageTwo;
 
 architecture Behavioral of StageTwo is
 	
-	constant registers_number : integer := 144;
+	constant registers_number : integer := 129;
 	
 	-- Operand with the lowest exponent
 	alias sign_1_in is operand_1_in(31);
@@ -74,9 +75,9 @@ architecture Behavioral of StageTwo is
 	-- Mantissa right shifter
 	component MantissaRightShifter
 		port (
-			x		: in 	std_logic_vector(0 to 22);
-			pos	: in	std_logic_vector(0 to 4);
-			y		: out	std_logic_vector(0 to 22)
+			x		:	in 	std_logic_vector(22 downto 0);
+			pos	:	in		std_logic_vector(4 downto 0);
+			y		:	out	std_logic_vector(22 downto 0)
 		);
 	end component;
 	
@@ -161,18 +162,16 @@ begin
 			Q => Q
 		);
 	
-	D <= 	sum_dff &
+	D <= 	special_case_flag_in &
+			special_case_result_in &
+			sum_dff &
 			operand_1_in &
-			operand_1_dff &
-			operand_2_dff &
-			exp_difference_in &
-			exp_difference_abs_in;
+			operand_1_dff;
 	
-	sum <= Q(0 to 31);
-	operand_1_out <= Q(32 to 63);
-	operand_1_shifted <= Q(64 to 95);
-	operand_2_out <= Q(96 to 127);
-	exp_difference_out <= Q(128 to 135);
-	exp_difference_abs_out <= Q(136 to 143);
+	special_case_flag_out <= Q(0);
+	special_case_result_out <= Q(1 to 32);
+	sum <= Q(33 to 64);
+	operand_1_out <= Q(65 to 96);
+	operand_1_shifted <= Q(97 to 128);
 	
 end Behavioral;

@@ -8,12 +8,12 @@ use ieee.std_logic_1164.all;
 
 entity RightShifter is
 	generic (
-		n 	: 	integer;					-- Data size
-		s 	:	integer					-- Shift amount
+		n 	: 	integer;			-- Data size
+		s 	:	integer			-- Shift amount
 	);					
 	port (
-		x	: in 	std_logic_vector(0 to n-1);	-- Input data
-		y	: out	std_logic_vector(0 to n-1)		-- Output data
+		x	:	in 	std_logic_vector(0 to n-1);	-- Input data
+		y	:	out	std_logic_vector(0 to n-1)		-- Output data
 	);
 end RightShifter;
 

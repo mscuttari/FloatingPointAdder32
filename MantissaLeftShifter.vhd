@@ -1,23 +1,23 @@
 ----------------------------------------------------------------------------------
--- Module Name:    	MantissaRightShifter
+-- Module Name:    	MantissaLeftShifter
 -- Project Name: 		32 bit floating point adder
--- Description: 		Right shift the mantissa up to 23 positions
-----------------------------------------------------------------------------------
+-- Description: 		Left shift the mantissa up to 23 positions
+------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity MantissaRightShifter is
+entity MantissaLeftShifter is
 	port (
 		x		:	in 	std_logic_vector(22 downto 0);	-- Original mantissa
-		pos	:	in		std_logic_vector(4 downto 0);		-- Shift amount
+		pos	:	in 	std_logic_vector(4 downto 0);		-- Shift amount
 		y		:	out	std_logic_vector(22 downto 0)		-- Shifted mantissa
 	);
-end MantissaRightShifter;
+end MantissaLeftShifter;
 
-architecture Behavioral of MantissaRightShifter is
-
-	-- Generic s-positions right shifter of a n-bit value
-	component RightShifter
+architecture Behavioral of MantissaLeftShifter is
+	
+	-- Generic s-positions left shifter of a n-bit value
+	component LeftShifter
 		generic (
 			n : integer;
 			s : integer
@@ -27,28 +27,26 @@ architecture Behavioral of MantissaRightShifter is
 			y	: out 	std_logic_vector(n-1 downto 0)
 		);
 	end component;
-	
+
 	type vector23 is array (natural range <>) of std_logic_vector(22 downto 0);
 	signal shiftsVector : vector23(23 downto 0);
 	
 begin
 
-	-- Instantiation of 23 shifters with incremental shift amounts
-	gen_shift: 
-	for i in 0 to 22 generate
-		 shifter: RightShifter
-			generic map(
+	gen_shift:
+	for i in 0 to 23 generate
+		shifter: LeftShifter
+			generic map (
 				n => 23,
 				s => i
 			)
-			port map(
-				x => x,
+			port map (
+				x => x(22 downto 0),
 				y => shiftsVector(i)
 			);
-   end generate gen_shift;
+	end generate gen_shift;
 	
-	-- Select the right output
-	y <=  shiftsVector(0) when pos = "00000" else
+	y <= 	shiftsVector(0) when pos = "00000" else
 			shiftsVector(1) when pos = "00001" else
 			shiftsVector(2) when pos = "00010" else
 			shiftsVector(3) when pos = "00011" else
@@ -72,6 +70,6 @@ begin
 			shiftsVector(21) when pos = "10101" else
 			shiftsVector(22) when pos = "10110" else
 			shiftsVector(23);
-	
+
 end Behavioral;
 
