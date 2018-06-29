@@ -8,12 +8,12 @@ use ieee.std_logic_1164.all;
 
 entity RegisterN is
 	generic (
-		n 	: 	integer												-- Number of registers
+		n 	: 	integer											-- Number of registers
 	);					
 	port (
-		CLK		:	in		std_logic;							-- Clock
-		D_vector	: 	in 	std_logic_vector(0 to n-1);	-- Input data
-		Q_vector	: 	out	std_logic_vector(0 to n-1)		-- Output data
+		CLK	:	in		std_logic;							-- Clock
+		D		: 	in 	std_logic_vector(0 to n-1);	-- Input data
+		Q		: 	out	std_logic_vector(0 to n-1)		-- Output data
 	);
 end RegisterN;
 
@@ -31,11 +31,11 @@ begin
 
 	gen_dff: 
 	for i in 0 to n-1 generate
-		 dff: DFF
+		 single_dff: DFF
 			port map(
 				CLK => CLK,
-				D => D_vector(i),
-				Q => Q_vector(i)
+				D => D(i),
+				Q => Q(i)
 			);
    end generate gen_dff;
 
