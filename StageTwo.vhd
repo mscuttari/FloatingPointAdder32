@@ -21,7 +21,7 @@ entity StageTwo is
 		
 		-- Debug
 		operand_1_out				:	out	std_logic_vector(31 downto 0);	-- operand_1_in
-		operand_1_shifted			:	out	std_logic_vector(31 downto 0)	-- operand_1_in with shifted mantissa
+		operand_1_shifted			:	out	std_logic_vector(31 downto 0)		-- operand_1_in with shifted mantissa
 	);
 end StageTwo;
 
@@ -55,8 +55,9 @@ architecture Behavioral of StageTwo is
 	alias exponent_sum_dff is sum_dff(30 downto 23);
 	alias mantissa_sum_dff is sum_dff(22 downto 0);
 	
-	-- Difference between M1 and M2
-	signal M1_M2_difference	:	std_logic_vector(0 to 22);
+	signal M1_M2_sum			:	std_logic_vector(0 to 22);		-- M1 + M2
+	signal M1_M2_difference	:	std_logic_vector(0 to 22);		-- M1 - M2
+	signal M2_M1_difference	:	std_logic_vector(0 to 22);		-- M2 - M1
 	
 	-- Registers
 	signal D, Q : std_logic_vector(0 to registers_number - 1);
@@ -123,7 +124,7 @@ begin
 		);
 	
 	-- M1 - M2
-	mantissa_sub: RippleCarrySubtractor
+	mantissa_sub_1: RippleCarrySubtractor
 		generic map (
 			n => 23
 		)
@@ -133,6 +134,17 @@ begin
 			s => M1_M2_difference
 		);
 	
+	-- M2 - M1
+	mantissa_sub_2: RippleCarrySubtractor
+		generic map (
+			n => 23
+		)
+		port map (
+         x => mantissa_2_dff,
+			y => mantissa_1_dff,
+			s => M2_M1_difference
+		);
+	
 	-- Sign
 	sign_sum_dff <= sign_2_dff when M1_M2_difference(0) = '1' else
 						 sign_1_dff;
@@ -140,16 +152,21 @@ begin
 	-- Exponent
 	exponent_sum_dff <= exponent_2_dff;
 	
-	-- Mantissa (M1 + M2)
-	mantissa_adder: RippleCarryAdder
+	-- Mantissa
+	mantissa_sum: RippleCarryAdder
 		generic map (
 			n => 23
 		)
 		port map (
          x => mantissa_1_dff,
 			y => mantissa_2_dff,
-			s => mantissa_sum_dff
+			s => M1_M2_sum
 		);
+	
+	mantissa_sum_dff <=	M1_M2_sum when sign_1_dff = sign_2_dff else
+								M1_M2_difference when M1_M2_difference(0) = '0' else
+								M2_M1_difference when M1_M2_difference(0) = '1' else
+								(others => '-');
 	
 	-- Connect the registers
 	registers: RegisterN
