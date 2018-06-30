@@ -83,15 +83,15 @@ architecture Behavioral of StageThree is
 		);
 	end component;
 	
-	-- Ripple carry adder
-	component RippleCarryAdder
+	-- Ripple carry subtractor
+	component RippleCarrySubtractor
 		generic (
 			n : integer
 		);
 		port (
-			x, y 		: in  	std_logic_vector(0 to n-1);
-			s			: out		std_logic_vector(0 to n-1);
-			overflow	: out		std_logic
+			x, y 			: in  	std_logic_vector(0 to n-1);
+			s				: out		std_logic_vector(0 to n-1);
+			underflow	: out		std_logic
 		);
 	end component;
 	
@@ -126,8 +126,8 @@ begin
 			y 		=> mantissa_normal_result_dff
 		);
 	
-	-- Increment the exponent
-	exponent_adjust: RippleCarryAdder
+	-- Adjust the exponent
+	exponent_adjust: RippleCarrySubtractor
 		generic map (
 			n => 8
 		)
