@@ -76,9 +76,10 @@ architecture Behavioral of StageTwo is
 	-- Mantissa right shifter
 	component MantissaRightShifter
 		port (
-			x		:	in 	std_logic_vector(22 downto 0);
-			pos	:	in		std_logic_vector(4 downto 0);
-			y		:	out	std_logic_vector(22 downto 0)
+			x				:	in 	std_logic_vector(22 downto 0);
+			pos			:	in		std_logic_vector(4 downto 0);
+			normalized	:	in		std_logic;
+			y				:	out	std_logic_vector(22 downto 0)
 		);
 	end component;
 	
@@ -118,9 +119,10 @@ begin
 	-- Mantissa right shifter
 	mantissa_right_shifter: MantissaRightShifter
 		port map (
-			x 		=> mantissa_1_in,
-			pos 	=> exp_difference_abs_in(3 to 7),
-			y 		=> mantissa_1_dff
+			x 				=> mantissa_1_in,
+			pos 			=> exp_difference_abs_in(3 to 7),
+			normalized	=>	'1',
+			y 				=> mantissa_1_dff
 		);
 	
 	-- M1 - M2
