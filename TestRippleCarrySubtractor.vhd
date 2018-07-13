@@ -15,9 +15,9 @@ architecture behavior of TestRippleCarrySubtractor is
 			n : integer
 		);
 		port (
-         x, y			:	in		std_logic_vector(n-1 downto 0);
-         s 				:	out	std_logic_vector(n-1 downto 0);
-         underflow 	:	out  	std_logic
+			x, y				:	in		std_logic_vector(n-1 downto 0);
+			s 					:	out	std_logic_vector(n-1 downto 0);
+         result_sign 	:	out  	std_logic
         );
     end component;
 
@@ -26,7 +26,7 @@ architecture behavior of TestRippleCarrySubtractor is
 
  	--Outputs
    signal s 			: std_logic_vector(7 downto 0);
-   signal underflow 	: std_logic;
+   signal sign		 	: std_logic;
  
 begin
    uut: RippleCarrySubtractor
@@ -34,10 +34,10 @@ begin
 			n => 8
 		)
 		port map (
-         x => x,
-         y => y,
-         s => s,
-         underflow => underflow
+         x 				=> x,
+         y				=> y,
+         s 				=> s,
+         result_sign => sign
       );
 		
    stim_proc: process

@@ -12,10 +12,12 @@ end TestParticularCaseAssignation;
 architecture behavior of TestParticularCaseAssignation is 
 	component ParticularCaseAssignation
 		port (
-			a			:	in 	std_logic_vector(31 downto 0);
-			b			:	in 	std_logic_vector(31 downto 0);
-			enable	:	out	std_logic;
-			result	:	out	std_logic_vector(31 downto 0)
+			a					:	in 	std_logic_vector(31 downto 0);
+			b					:	in 	std_logic_vector(31 downto 0);
+			enable			:	out	std_logic;
+			result			:	out	std_logic_vector(31 downto 0);
+			normalized_a	:	out	std_logic;
+			normalized_b	:	out	std_logic
 		);
 	end component;
    
@@ -26,19 +28,18 @@ architecture behavior of TestParticularCaseAssignation is
  	-- Outputs
 	signal e		:	std_logic;
 	signal s		:	std_logic_vector(0 to 31);
+	signal n_a	:	std_logic;
+	signal n_b	:	std_logic;
 
 begin
    uut: ParticularCaseAssignation
-		generic map (
-			operand_size => 32,
-			exponent_size => 8,
-			mantissa_size => 23
-		)
 		port map (
          a => a,
          b => b,
 			enable => e,
-			result => s
+			result => s,
+			normalized_a => n_a,
+			normalized_b => n_b
 		);
 
    stim_proc: process
@@ -76,6 +77,15 @@ begin
 		wait for 100 ns;
 		b <= "10101010101010101010101010101010";
 		a <= "01010101010101010101010101010101";
+		wait for 100 ns;
+		b <= "11100100101010101010101010101010";
+		a <= "00000000010101010101010101010101";
+		wait for 100 ns;
+		b <= "10000000001010101010101010101010";
+		a <= "01010101010101010101010101010101";
+		wait for 100 ns;
+		b <= "10000000001010101010101010101010";
+		a <= "00000000010101010101010101010101";
 		wait;
    end process;
 
