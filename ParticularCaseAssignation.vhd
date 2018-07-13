@@ -22,10 +22,12 @@ use ieee.std_logic_1164.all;
 
 entity ParticularCaseAssignation is
 	port (
-		a			:	in 	std_logic_vector(31 downto 0);		-- First operand
-		b			:	in 	std_logic_vector(31 downto 0);		-- Second operand
-		enable	:	out	std_logic;													-- Enable signal
-		result	:	out	std_logic_vector(31 downto 0)		-- Result
+		a					:	in 	std_logic_vector(31 downto 0);			-- First operand
+		b					:	in 	std_logic_vector(31 downto 0);			-- Second operand
+		enable			:	out	std_logic;										-- Enable signal
+		result			:	out	std_logic_vector(31 downto 0);			-- Result
+		normalized_a	:	out	std_logic;										--	Normalized a value signal
+		normalized_b	:	out	std_logic										--	Normalized b value signal
 	);
 end ParticularCaseAssignation;
 
@@ -58,6 +60,8 @@ begin
 			S <= Sb;
 			E <= Eb;
 			M <= Mb;
+			normalized_a <= '0';
+			normalized_b <= '0';
 			
 		-- anything + 0 = anything
 		elsif (	Eb = (30 downto 23 => '0') and
@@ -67,6 +71,8 @@ begin
 			S <= Sa;
 			E <= Ea;
 			M <= Ma;
+			normalized_a <= '0';
+			normalized_b <= '0';
 			
 		-- + Infinity + Infinity = + Infinity
 		elsif (	Sa = '0' and
@@ -80,6 +86,8 @@ begin
 			S <= '0';
 			E <= (others => '1');
 			M <= (others => '0');
+			normalized_a <= '0';
+			normalized_b <= '0';
 		
 		-- - Infinity - Infinity = - Infinity
 		elsif (	Sa = '1' and
@@ -93,6 +101,8 @@ begin
 			S <= '1';
 			E <= (others => '1');
 			M <= (others => '0');
+			normalized_a <= '0';
+			normalized_b <= '0';
 			
 		-- + Infinity - Infinity = NaN
 		elsif (	Sa = '0' and
@@ -106,6 +116,8 @@ begin
 			S <= '0';
 			E <= (others => '1');
 			M <= (0 => '1', others => '0');
+			normalized_a <= '0';
+			normalized_b <= '0';
 		
 		-- - Infinity + Infinity = NaN
 		elsif (	Sa = '1' and
@@ -119,6 +131,8 @@ begin
 			S <= '0';
 			E <= (others => '1');
 			M <= (0 => '1', others => '0');
+			normalized_a <= '0';
+			normalized_b <= '0';
 		
 		-- NaN + anything = NaN
 		elsif (Ea = (30 downto 23 => '1')) then
@@ -127,6 +141,8 @@ begin
 			S <= '0';
 			E <= (others => '1');
 			M <= (0 => '1', others => '0');
+			normalized_a <= '0';
+			normalized_b <= '0';
 		
 		-- anything + NaN = NaN
 		elsif (Eb = (30 downto 23 => '1')) then
@@ -135,12 +151,48 @@ begin
 			S <= '0';
 			E <= (others => '1');
 			M <= (0 => '1', others => '0');
+			normalized_a <= '0';
+			normalized_b <= '0';
 		
+		--	both numbers not normalized
+		elsif	(Ea = (30 downto 23 => '0') and
+				 Eb = (30 downto 23 => '0')) then
+				 
+			enable <= '0';
+			S <= '-';
+			E <= (30 downto 23 => '-');
+			M <= (22 downto 0 => '-');
+			normalized_a <= '0';
+			normalized_b <= '0';
+		
+		-- only number a not normalized
+		elsif (Ea = (30 downto 23 => '0')) then
+		
+			enable <= '0';
+			S <= '-';
+			E <= (30 downto 23 => '-');
+			M <= (22 downto 0 => '-');
+			normalized_a <= '0';
+			normalized_b <= '1';
+		
+		-- only number b not normalized
+		elsif (Eb = (30 downto 23 => '0')) then
+		
+			enable <= '0';
+			S <= '-';
+			E <= (30 downto 23 => '-');
+			M <= (22 downto 0 => '-');
+			normalized_a <= '1';
+			normalized_b <= '0';
+		
+		-- both numbers normalized
 		else
 			enable <= '0';
 			S <= '-';
 			E <= (30 downto 23 => '-');
 			M <= (22 downto 0 => '-');
+			normalized_a <= '1';
+			normalized_b <= '1';
 		end if;
 	end process;
 	

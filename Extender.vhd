@@ -20,5 +20,5 @@ end Extender;
 architecture Behavioral of Extender is
 	signal zero : std_logic_vector(0 to s-1) := (others => '0');
 begin
-	y <= zero(0 to s-n-1) & x(0 to n-1);
+	y <= x(0 to n-1) & zero(0 to s-n-1);
 end Behavioral;
