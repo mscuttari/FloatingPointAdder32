@@ -26,8 +26,8 @@ entity ParticularCaseAssignation is
 		b					:	in 	std_logic_vector(31 downto 0);			-- Second operand
 		enable			:	out	std_logic;										-- Enable signal
 		result			:	out	std_logic_vector(31 downto 0);			-- Result
-		normalized_a	:	out	std_logic;										--	Normalized a value signal
-		normalized_b	:	out	std_logic										--	Normalized b value signal
+		normalized_a	:	out	std_logic;										--	Whether the first operand is normalized or not
+		normalized_b	:	out	std_logic										--	Whether the second operand is normalized or not
 	);
 end ParticularCaseAssignation;
 
@@ -53,135 +53,146 @@ begin
 	process (a, b)
 	begin
 		-- 0 + anything = anything
-		if (	Ea = (30 downto 23 => '0') and
-				Ma = (22 downto 0 => '0')) then
+		if (	Ea = "00000000" and
+				Ma = "00000000000000000000000") then
 			
 			enable <= '1';
 			S <= Sb;
 			E <= Eb;
 			M <= Mb;
-			normalized_a <= '0';
-			normalized_b <= '0';
+			normalized_a <= '-';
+			normalized_b <= '-';
 			
 		-- anything + 0 = anything
-		elsif (	Eb = (30 downto 23 => '0') and
-					Mb = (22 downto 0 => '0')) then
+		elsif (	Eb = "00000000" and
+					Mb = "00000000000000000000000") then
 			
 			enable <= '1';
 			S <= Sa;
 			E <= Ea;
 			M <= Ma;
-			normalized_a <= '0';
-			normalized_b <= '0';
+			normalized_a <= '-';
+			normalized_b <= '-';
 			
 		-- + Infinity + Infinity = + Infinity
 		elsif (	Sa = '0' and
-				Ea = (30 downto 23 => '1') and
-				Ma = (22 downto 0 => '0') and
-				Sb = '0' and
-				Eb = (30 downto 23 => '1') and
-				Mb = (22 downto 0 => '0')) then
+					Ea = "11111111" and
+					Ma = "00000000000000000000000" and
+					Sb = '0' and
+					Eb = "11111111" and
+					Mb = "00000000000000000000000") then
 			
 			enable <= '1';
 			S <= '0';
-			E <= (others => '1');
-			M <= (others => '0');
-			normalized_a <= '0';
-			normalized_b <= '0';
+			E <= "11111111";
+			M <= "00000000000000000000000";
+			normalized_a <= '-';
+			normalized_b <= '-';
 		
 		-- - Infinity - Infinity = - Infinity
 		elsif (	Sa = '1' and
-					Ea = (30 downto 23 => '1') and
-					Ma = (22 downto 0 => '0') and
+					Ea = "11111111" and
+					Ma = "00000000000000000000000" and
 					Sb = '1' and
-					Eb = (30 downto 23 => '1') and
-					Mb = (22 downto 0 => '0')) then
+					Eb = "11111111" and
+					Mb = "00000000000000000000000") then
 			
 			enable <= '1';
 			S <= '1';
-			E <= (others => '1');
-			M <= (others => '0');
-			normalized_a <= '0';
-			normalized_b <= '0';
+			E <= "11111111";
+			M <= "00000000000000000000000";
+			normalized_a <= '-';
+			normalized_b <= '-';
 			
 		-- + Infinity - Infinity = NaN
 		elsif (	Sa = '0' and
-					Ea = (30 downto 23 => '1') and
-					Ma = (22 downto 0 => '0') and
+					Ea = "11111111" and
+					Ma = "00000000000000000000000" and
 					Sb = '1' and
-					Eb = (30 downto 23 => '1') and
-					Mb = (22 downto 0 => '0')) then
+					Eb = "11111111" and
+					Mb = "00000000000000000000000") then
 			
 			enable <= '1';
 			S <= '0';
-			E <= (others => '1');
-			M <= (0 => '1', others => '0');
-			normalized_a <= '0';
-			normalized_b <= '0';
+			E <= "11111111";
+			M <= "00000000000000000000001";
+			normalized_a <= '-';
+			normalized_b <= '-';
 		
 		-- - Infinity + Infinity = NaN
 		elsif (	Sa = '1' and
-					Ea = (30 downto 23 => '1') and
-					Ma = (22 downto 0 => '0') and
+					Ea = "11111111" and
+					Ma = "00000000000000000000000" and
 					Sb = '0' and
-					Eb = (30 downto 23 => '1') and
-					Mb = (22 downto 0 => '0')) then
+					Eb = "11111111" and
+					Mb = "00000000000000000000000") then
 			
 			enable <= '1';
 			S <= '0';
-			E <= (others => '1');
-			M <= (0 => '1', others => '0');
-			normalized_a <= '0';
-			normalized_b <= '0';
+			E <= "11111111";
+			M <= "00000000000000000000001";
+			normalized_a <= '-';
+			normalized_b <= '-';
 		
 		-- NaN + anything = NaN
-		elsif (Ea = (30 downto 23 => '1')) then
+		elsif (Ea = "11111111") then
 			
 			enable <= '1';
 			S <= '0';
-			E <= (others => '1');
-			M <= (0 => '1', others => '0');
-			normalized_a <= '0';
-			normalized_b <= '0';
+			E <= "11111111";
+			M <= "00000000000000000000001";
+			normalized_a <= '-';
+			normalized_b <= '-';
 		
 		-- anything + NaN = NaN
-		elsif (Eb = (30 downto 23 => '1')) then
+		elsif (Eb = "11111111") then
 			
 			enable <= '1';
 			S <= '0';
-			E <= (others => '1');
-			M <= (0 => '1', others => '0');
-			normalized_a <= '0';
-			normalized_b <= '0';
+			E <= "11111111";
+			M <= "00000000000000000000001";
+			normalized_a <= '-';
+			normalized_b <= '-';
+		
+		elsif (Sa = not Sb and
+					Ea = Eb and
+					Ma = Mb) then
+			
+			enable <= '1';
+			S <= '0';
+			E <= "00000000";
+			M <= "00000000000000000000000";
+			normalized_a <= '-';
+			normalized_b <= '-';
 		
 		--	both numbers not normalized
-		elsif	(Ea = (30 downto 23 => '0') and
-				 Eb = (30 downto 23 => '0')) then
+		elsif	(Ea = "00000000" and
+				 Eb = "00000000") then
 				 
 			enable <= '0';
 			S <= '-';
-			E <= (30 downto 23 => '-');
-			M <= (22 downto 0 => '-');
+			E <= "--------";
+			M <= "-----------------------";
 			normalized_a <= '0';
 			normalized_b <= '0';
 		
 		-- only number a not normalized
-		elsif (Ea = (30 downto 23 => '0')) then
+		elsif (Ea = "00000000") then
 		
 			enable <= '0';
 			S <= '-';
-			E <= (30 downto 23 => '-');
-			M <= (22 downto 0 => '-');
+			E <= "--------";
+			M <= "-----------------------";
 			normalized_a <= '0';
 			normalized_b <= '1';
 		
 		-- only number b not normalized
-		elsif (Eb = (30 downto 23 => '0')) then
+		elsif (Eb = "00000000") then
 		
 			enable <= '0';
 			S <= '-';
-			E <= (30 downto 23 => '-');
-			M <= (22 downto 0 => '-');
+			E <= "--------";
+			M <= "-----------------------";
 			normalized_a <= '1';
 			normalized_b <= '0';
 		
@@ -189,8 +200,8 @@ begin
 		else
 			enable <= '0';
 			S <= '-';
-			E <= (30 downto 23 => '-');
-			M <= (22 downto 0 => '-');
+			E <= "--------";
+			M <= "-----------------------";
 			normalized_a <= '1';
 			normalized_b <= '1';
 		end if;
