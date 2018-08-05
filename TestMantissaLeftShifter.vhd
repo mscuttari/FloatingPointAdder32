@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
--- Module Name:   TestLeftShifter
+-- Module Name:   TestMantissaLeftShifter
 -- Project Name:  FloatingPointAdder32
--- Description:   VHDL test bench for module LeftShifter
+-- Description:   VHDL test bench for module MantissaLeftShifter
 --------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12,46 +12,67 @@ end TestMantissaLeftShifter;
 architecture behavior of TestMantissaLeftShifter is 
 	 
     component MantissaLeftShifter
-    port(
-         x 		: in		std_logic_vector(0 to 27);
-         pos 	: in  	std_logic_vector(0 to 4);
-         y 		: out  	std_logic_vector(0 to 27)
-        );
+		port (
+         x		:	in 	std_logic_vector(27 downto 0);
+			pos	:	in 	std_logic_vector(7 downto 0);
+			y		:	out	std_logic_vector(27 downto 0)
+       );
     end component;
     
    -- Inputs
-   signal x 	: 	std_logic_vector(0 to 27) 	:=	(others => '0');
-   signal pos 	: 	std_logic_vector(0 to 4) 	:=	(others => '0');
+   signal x 	: 	std_logic_vector(27 downto 0);
+   signal pos 	: 	std_logic_vector(7 downto 0);
 
  	-- Outputs
-   signal y : std_logic_vector(0 to 27);
+   signal y : std_logic_vector(27 downto 0);
+	
+	signal y_expected	:	std_logic_vector(27 downto 0);
+	
+	signal check	:	std_logic;
 
 begin
+
    uut: MantissaLeftShifter
 		port map (
           x 	=>	x,
           pos 	=>	pos,
           y 	=>	y
         );
+		  
+	test:	check <= '1' when y = y_expected else '0';
 
    stim_proc: process
    begin
-		x <= "0101010001011110101001001101";
+	
+		x				<= "1111111111111111111111111111";
+		pos			<= "00000000";
+		y_expected	<=	"1111111111111111111111111111";
 		
-		pos <= "00000";
-		wait for 100 ns;
+		wait for 200 ns;
 		
-		pos <= "00001";
-		wait for 100 ns;
+		x				<= "1111111111111111111111111111";
+		pos			<= "00000001";
+		y_expected	<=	"1111111111111111111111111110";
 		
-		pos <= "00101";
-		wait for 100 ns;
+		wait for 200 ns;
 		
-		pos <= "10101";
-		wait for 100 ns;
+		x				<= "1111111111111111111111111111";
+		pos			<= "00011011";
+		y_expected	<=	"1000000000000000000000000000";
 		
-		pos <= "10110";
+		wait for 200 ns;
+		
+		x				<= "1111111111111111111111111111";
+		pos			<= "00011100";
+		y_expected	<=	"0000000000000000000000000000";
+		
+		wait for 200 ns;
+		
+		x				<= "1111111111111111111111111111";
+		pos			<= "00011101";
+		y_expected	<=	"0000000000000000000000000000";
+		
       wait;
+		
    end process;
-
 end;

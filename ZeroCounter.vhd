@@ -15,7 +15,9 @@ entity ZeroCounter is
 end ZeroCounter;
 
 architecture Behavioral of ZeroCounter is
-	signal zero : std_logic_vector(27 downto 0) := (others => '0');
+
+	constant zero : std_logic_vector(27 downto 0) := (others => '0');
+	
 begin
 	
 	count <= "11100" when mantissa(27 downto 0)	= zero(27 downto 0)	else

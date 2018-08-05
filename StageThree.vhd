@@ -8,22 +8,20 @@ use ieee.std_logic_1164.all;
 
 entity StageThree is
 	port (
-		CLK							:	in		std_logic;								-- Clock signal
-		special_case_flag			:	in		std_logic;								-- Whether the operands leads to a special case
-		special_case_result		:	in		std_logic_vector(31 downto 0);	-- Special case result
-		value							:	in		std_logic_vector(36 downto 0);	-- Result of the sum between the two operands
-		overflow						:	in		std_logic;								--	Overflow value
-		normalized_value			:	out	std_logic_vector(31 downto 0);	-- Normalized result
+		CLK								:	in		std_logic;								-- Clock signal
+		special_case_flag				:	in		std_logic;								-- Whether the operands leads to a special case
+		special_case_result			:	in		std_logic_vector(31 downto 0);	-- Special case result
+		value								:	in		std_logic_vector(36 downto 0);	-- Result of the sum between the two operands
+		result							:	out	std_logic_vector(31 downto 0);	-- Normalized result
 		
 		-- Debug
-		mantissa_shift				:	out	std_logic_vector(4 downto 0);
-		exponent_increase			:	out	std_logic_vector(7 downto 0)
+		special_case_flag_out		:	out	std_logic								-- Whether there is a special case or not
 	);
 end StageThree;
 
 architecture Behavioral of StageThree is
 	
-	constant registers_number : integer := 45;
+	constant registers_number : integer := 33;
 	
 	alias sign is value(36);
 	alias exponent is value(35 downto 28);
@@ -35,35 +33,37 @@ architecture Behavioral of StageThree is
 	alias sign_normal_result_dff is normal_result_dff(31);
 	alias exponent_normal_result_dff is normal_result_dff(30 downto 23);
 	alias mantissa_normal_result_dff is normal_result_dff(22 downto 0);
-	
-	signal mantissa_after_sum_shift						:	std_logic_vector(27 downto 0);
-	signal mantissa_after_sum_shift_overflowed		:	std_logic_vector(27 downto 0);
-	signal exponent_after_sum_shift						:	std_logic_vector(7 downto 0);
-	signal mantissa_after_sum_overflow					:	std_logic_vector(27 downto 0);
-	signal exponent_after_sum_overflow					:	std_logic_vector(7 downto 0);
-	signal mantissa_shift_amount 							:	std_logic_vector(4 downto 0);
-	signal exponent_increase_amount						:	std_logic_vector(7 downto 0);
-	signal starting_zeros									:	std_logic_vector(4 downto 0);
+		
+	signal starting_zeros									:	std_logic_vector(4 downto 0);									-- Number of initial zeros of the mantissa
 	signal extended_starting_zeros						:	std_logic_vector(7 downto 0);
-	signal exponent_subtract_value						:	std_logic_vector(7 downto 0);
-	signal exponent_subtract_sign							:	std_logic;
-	signal shift_amount_not_normalized_case			:	std_logic_vector(7 downto 0);
-	signal exponent_after_left_shift						:	std_logic_vector(7 downto 0);
-	signal mantissa_after_left_shift						:	std_logic_vector(27 downto 0);
-	signal round												:	std_logic;
-	signal round_vector										:	std_logic_vector(27 downto 0)	:=	(others => '0');
-	signal round_overflow									:	std_logic;
-	signal mantissa_after_round							:	std_logic_vector(27 downto 0);
-	signal mantissa_after_round_shift					:	std_logic_vector(27 downto 0);
-	signal mantissa_after_round_shift_overflowed		:	std_logic_vector(27 downto 0);
-	signal exponent_after_round_shift					:	std_logic_vector(7 downto 0);
+	
+	signal exponent_subtract_value						:	std_logic_vector(7 downto 0);									--	Exponent - initial zeros value
+	signal exponent_subtract_sign							:	std_logic;															--	Exponent - initial zeros sign
+	signal shift_amount_not_normalized_case			:	std_logic_vector(7 downto 0);									--	Mantissa shift amount if the result is not normalizable
+	
+	signal mantissa_shift_amount							:	std_logic_vector(7 downto 0);									--	Effective left shift amount
+	signal exponent_after_left_shift						:	std_logic_vector(7 downto 0);									--	Exponent after left shift
+	signal mantissa_after_left_shift						:	std_logic_vector(27 downto 0);								--	Mantissa after left shift
+	
+	signal round												:	std_logic;															--	Rounding of guard bits
+	signal extended_round									:	std_logic_vector(23 downto 0);
+	signal mantissa_after_round							:	std_logic_vector(23 downto 0);								--	Sum between mantissa and rounded guard bits
+	signal round_overflow									:	std_logic;															--	Overflow of sum between mantissa and rounded guard bits
+	
+	signal mantissa_after_round_shift					:	std_logic_vector(23 downto 0);								--	1-position shifted mantissa (after round)
+	signal exponent_after_round_shift					:	std_logic_vector(7 downto 0);									--	Exponent with positive overflow
+	
+	--	Special cases
+	signal round_infinite_check							:	std_logic;
+	signal special_case_flag_dff							:	std_logic;
+	signal special_case_result_dff						:	std_logic_vector(31 downto 0);								--
 	
 	signal result_dff : std_logic_vector(31 downto 0);
 	
 	-- Registers
 	signal D, Q : std_logic_vector(0 to registers_number - 1);
 	
-	component RegisterN
+	component Registers
 		generic (
 			n : integer
 		);
@@ -71,6 +71,28 @@ architecture Behavioral of StageThree is
 			CLK	:	in		std_logic;
 			D		: 	in 	std_logic_vector(0 to n-1);
 			Q		: 	out	std_logic_vector(0 to n-1)
+		);
+	end component;
+	
+	-- Left Extender
+	component LeftExtender
+		generic (
+			n, s	:	integer
+		);
+		port (
+			x	: in 	std_logic_vector(0 to n-1);
+			y	: out	std_logic_vector(0 to s-1)
+		);
+	end component;
+	
+	-- Right Extender
+	component RightExtender
+		generic (
+			n, s	:	integer
+		);
+		port (
+			x	: in 	std_logic_vector(0 to n-1);
+			y	: out	std_logic_vector(0 to s-1)
 		);
 	end component;
 	
@@ -82,12 +104,15 @@ architecture Behavioral of StageThree is
 		);
 	end component;
 	
-	-- Mantissa right shifter
-	component MantissaRightShifter
+	-- Right shifter
+	component RightShifter
+		generic (
+			n : integer;
+			s : integer
+		);
 		port (
-			x				:	in 	std_logic_vector(27 downto 0);
-			pos			:	in		std_logic_vector(4 downto 0);
-			y				:	out	std_logic_vector(27 downto 0)
+			x 	: in  	std_logic_vector(n-1 downto 0);
+			y	: out 	std_logic_vector(n-1 downto 0)
 		);
 	end component;
 	
@@ -95,19 +120,16 @@ architecture Behavioral of StageThree is
 	component MantissaLeftShifter
 		port (
 			x		: in 	std_logic_vector(27 downto 0);
-			pos	: in	std_logic_vector(4 downto 0);
+			pos	: in	std_logic_vector(7 downto 0);
 			y		: out	std_logic_vector(27 downto 0)
 		);
 	end component;
 	
 	-- Rounder
 	component Rounder
-		generic (
-			g	:	integer
-		);
 		port (
-			i	:	in		std_logic_vector(g-1 downto 0);
-			o	:	out	std_logic
+			x	:	in		std_logic_vector(3 downto 0);
+			y	:	out	std_logic
 		);
 	end component;
 	
@@ -118,7 +140,7 @@ architecture Behavioral of StageThree is
 		);
 		port (
 			x, y			: in	std_logic_vector(n-1 downto 0);
-			s				: out std_logic_vector(n-1 downto 0);
+			result		: out std_logic_vector(n-1 downto 0);
 			overflow		: out	std_logic
 		);
 	end component;
@@ -129,8 +151,8 @@ architecture Behavioral of StageThree is
 			n : integer
 		);
 		port (
-			x, y 			: in  	std_logic_vector(0 to n-1);
-			s				: out		std_logic_vector(0 to n-1);
+			x, y 			: in  	std_logic_vector(n-1 downto 0);
+			result		: out		std_logic_vector(n-1 downto 0);
 			result_sign	: out		std_logic
 		);
 	end component;
@@ -140,40 +162,23 @@ begin
 	-- Copy result sign
 	sign_normal_result_dff <= sign;
 	
-	--	If the sum produced an overflow in StageTwo, insert a '1' as the most significant bit
-	mantissa_right_shifter_sum: MantissaRightShifter
-		port map (
-			x 		=> mantissa,
-			pos 	=> "00001",
-			y 		=> mantissa_after_sum_shift
-		);
-	
-	mantissa_after_sum_shift_overflowed <= '1' & mantissa_after_sum_shift(26 downto 0);
-		
-	-- If the sum produced an overflow in StageTwo, increase the exponent by 1	
-	exponent_increase_sum: RippleCarryAdder
-		generic map (
-			n => 8
-		)
-		port map (
-         x => exponent,
-			y => "00000001",
-			s => exponent_after_sum_shift
-		);
-	
-	mantissa_after_sum_overflow	<=	mantissa_after_sum_shift_overflowed	when	overflow = '1' else
-												mantissa;
-	exponent_after_sum_overflow	<=	exponent_after_sum_shift	when	overflow = '1' else
-												exponent;
-	
 	-- Count the initial zeros of the mantissa
 	zero_counter: ZeroCounter
 		port map (
-         mantissa	=>	mantissa_after_sum_overflow,
+         mantissa	=>	mantissa,
 			count		=>	starting_zeros
 		);
-		
-	extended_starting_zeros <= "000" & starting_zeros;
+	
+	-- Extends starting zeros vector
+	starting_zero_extender: LeftExtender
+		generic map (
+			n => 5,
+			s => 8
+		)
+		port map (
+			x => starting_zeros,
+			y => extended_starting_zeros
+		);
 	
 	-- Exponent - number of starting 0's
 	exponent_zero_counter_difference: RippleCarrySubtractor
@@ -181,102 +186,100 @@ begin
 			n => 8
 		)
 		port map (
-         x 				=> exponent_after_sum_overflow,
+         x 				=> exponent,
 			y 				=> extended_starting_zeros,
-			s 				=> exponent_subtract_value,
+			result		=> exponent_subtract_value,
 			result_sign	=>	exponent_subtract_sign
 		);
-		
+	
+	-- Exp - 1 (to use if the result is not normalizable)
 	shift_left_not_normalized_case: RippleCarrySubtractor
 		generic map (
 			n => 8
 		)
 		port map (
-         x 				=> exponent_after_sum_overflow,
+         x 				=> exponent,
 			y 				=> "00000001",
-			s 				=> shift_amount_not_normalized_case
+			result		=> shift_amount_not_normalized_case
 		);
 	
-	mantissa_shift_amount <=	-- "00000"														when	exponent_subtract_value = "00000000" and starting_zeros = "00000"	else
-										"00000"														when	exponent_after_sum_overflow = "00000000" else --(exponent_subtract_sign = '1' or exponent_subtract_value = "00000000") and
-										shift_amount_not_normalized_case(4 downto 0)		when	exponent_subtract_sign = '1' or exponent_subtract_value = "00000000" else
-										starting_zeros;
+	--	Mantissa shift amount assignation
+	mantissa_shift_amount <=	"00000000"													when	exponent = "00000000" else
+										shift_amount_not_normalized_case(7 downto 0)		when	exponent_subtract_sign = '1' or exponent_subtract_value = "00000000" else
+										extended_starting_zeros;
 	
-	
-	
-	
-	--starting_zeros	when	exponent_subtract_sign = '0' and not exponent_subtract_value = "00000000" else
-	--									exponent_after_sum_overflow(4 downto 0);
-										
+	--	Exponent assignation
 	exponent_after_left_shift	<=	"00000001"									when	exponent_subtract_value = "00000000" and starting_zeros = "00000"	else
 											"00000000"									when	exponent_subtract_sign = '1' or exponent_subtract_value = "00000000" else
-											exponent_subtract_value(7 downto 0);
-											
-	exponent_increase_amount <= exponent_after_left_shift;
+											exponent_subtract_value;
 	
-	
-	
-	--										"00000001"	when	exponent_subtract_value(7 downto 0) = "00000000" else
-	--										exponent_subtract_value	when	exponent_subtract_sign = '0'	else
-	--										"00000000";
-	
+	-- Mantissa left shift
 	mantissa_left_shifter: MantissaLeftShifter
 		port map (
-          x 	=>	mantissa_after_sum_overflow,
+          x 	=>	mantissa,
           pos 	=>	mantissa_shift_amount,
           y 	=>	mantissa_after_left_shift
         );
-		  
-	mantissa_rounder:	Rounder
-		generic map (
-			g => 4
-		)
-		port map (
-			i => mantissa_after_left_shift(3 downto 0),
-			o => round
-		);
-		
-	round_vector(4) <= round;
 	
+	--	Guard bits rounder
+	mantissa_rounder:	Rounder
+		port map (
+			x => mantissa_after_left_shift(3 downto 0),
+			y => round
+		);
+	
+
+	extended_round <= "00000000000000000000000" & round;
+	
+	-- Mantissa approximation
 	round_sum: RippleCarryAdder
 		generic map (
-			n => 28
+			n => 24
 		)
 		port map (
-         x			=> mantissa_after_left_shift,
-			y			=> round_vector,
-			s			=> mantissa_after_round,
+         x			=> mantissa_after_left_shift(27 downto 4),
+			y			=> extended_round,
+			result	=> mantissa_after_round,
 			overflow	=>	round_overflow
 		);
-	
-	--	If the sum produced an overflow in Rounder, insert a '1' as the most significant bit
-	mantissa_right_shifter_round: MantissaRightShifter
+		
+	--	If the sum produced an overflow during the rounding process, then right shift the mantissa of 1 position
+	right_shifter_round: RightShifter
+		generic map (
+			n	=>	24,
+			s	=> 1
+		)
 		port map (
 			x 		=> mantissa_after_round,
-			pos 	=> "00001",
-			y 		=> mantissa_after_round_shift
+			y		=> mantissa_after_round_shift
 		);
 		
-	mantissa_after_round_shift_overflowed <= '1' & mantissa_after_round_shift(26 downto 0);
-		
-	-- If the sum produced an overflow in Rounder, increase the exponent by 1	
+	-- If the sum produced an overflow during the rounding process, then increase the exponent by 1	
 	exponent_increase_round: RippleCarryAdder
 		generic map (
 			n => 8
 		)
 		port map (
-         x => exponent_after_left_shift,
-			y => "00000001",
-			s => exponent_after_round_shift
+         x			=> exponent_after_left_shift,
+			y			=> "00000001",
+			result	=> exponent_after_round_shift
 		);
+		
+	mantissa_normal_result_dff <= mantissa_after_round_shift(22 downto 0)	when	round_overflow = '1' else
+											mantissa_after_round(22 downto 0);
 	
-	mantissa_normal_result_dff <= mantissa_after_round_shift_overflowed(26 downto 4)	when	round_overflow = '1' else
-											mantissa_after_left_shift(26 downto 4);
 	exponent_normal_result_dff <= exponent_after_round_shift	when	round_overflow = '1' else
 											exponent_after_left_shift;
+		
+	-- Check if the round produces and infinite value
+	round_infinite_check	<=	'1'	when	round_overflow = '1' and exponent_after_left_shift = "11111110"	else
+									'0';
+									
+	special_case_flag_dff	<=	'1' when (special_case_flag = '1') or (round_infinite_check = '1') else
+										'0';
 	
 	-- Connect the registers
-	registers: RegisterN
+	reg: Registers
 		generic map (
 			n => registers_number
 		)
@@ -286,15 +289,13 @@ begin
 			Q => Q
 		);
 	
-	result_dff <= 	special_case_result when special_case_flag = '1' else
-						normal_result_dff;
+	result_dff <= 	normal_result_dff when special_case_flag = '0' else
+						special_case_result;
 	
-	D <=	result_dff &
-			mantissa_shift_amount &
-			exponent_increase_amount;
+	D <= 	result_dff &
+			special_case_flag_dff;
 	
-	normalized_value <= Q(0 to 31);
-	mantissa_shift <= Q(32 to 36);
-	exponent_increase <= Q(37 to 44);
+	result <= Q(0 to 31);
+	special_case_flag_out <= Q(32);
 	
 end Behavioral;

@@ -5,56 +5,112 @@
 --------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-
+ 
 entity TestRightShifter is
 end TestRightShifter;
  
 architecture behavior of TestRightShifter is 
-	component RightShifter
+ 
+    component RightShifter
 		generic (
-			n : integer;
-			s : integer
+			n	: integer;
+			s	: integer
 		);
-		port (
-			x	: in  	std_logic_vector(0 to n-1);
-			y	: out 	std_logic_vector(0 to n-1)
-		);
-	end component;
-   
-   -- Inputs
-   signal x 	: std_logic_vector(0 to 7) := (others => '0');
+		port(
+         x	:	in		std_logic_vector(n-1 downto 0);
+         y	:	out	std_logic_vector(n-1 downto 0)
+       );
+    end component;
+    
 
- 	-- Outputs
-	signal y 	: std_logic_vector(0 to 7);
+   --Inputs
+   signal x	: std_logic_vector(22 downto 0);
 
+ 	--Outputs
+   signal y0	: std_logic_vector(22 downto 0);
+   signal y1	: std_logic_vector(22 downto 0);
+   signal y22	: std_logic_vector(22 downto 0);
+   signal y23	: std_logic_vector(22 downto 0);
+   signal y24	: std_logic_vector(22 downto 0);
+	
+	signal y0_expected	:	std_logic_vector(22 downto 0);
+	signal y1_expected	:	std_logic_vector(22 downto 0);
+	signal y22_expected	:	std_logic_vector(22 downto 0);
+	signal y23_expected	:	std_logic_vector(22 downto 0);
+	signal y24_expected	:	std_logic_vector(22 downto 0);
+	
+	signal check	:	std_logic;
+ 
 begin
-   uut: RightShifter
-		generic map(
-			n => 8,
-			s => 3
+
+	uut0: RightShifter 
+		generic map (
+			n => 23,
+			s => 0
 		)
 		port map (
          x => x,
-         y => y
-		);
-
+         y => y0
+      );
+		
+	uut1: RightShifter 
+		generic map (
+			n => 23,
+			s => 1
+		)
+		port map (
+         x => x,
+         y => y1
+      );
+		
+	uut22: RightShifter 
+		generic map (
+			n => 23,
+			s => 22
+		)
+		port map (
+         x => x,
+         y => y22
+      );
+		
+	uut23: RightShifter 
+		generic map (
+			n => 23,
+			s => 23
+		)
+		port map (
+         x => x,
+         y => y23
+      );
+		
+	uut24: RightShifter 
+		generic map (
+			n => 23,
+			s => 24
+		)
+		port map (
+         x => x,
+         y => y24
+      );
+		
+	test:	check <=	'1' when	y0		=	y0_expected		and
+									y1		=	y1_expected		and
+									y22	=	y22_expected	and
+									y23	=	y23_expected	and
+									y24	=	y24_expected
+						else '0';
+		
    stim_proc: process
    begin
-		wait for 100 ns;
-		x <= "11111111";
-      wait for 100 ns;
-		x <= "00000000";
-		wait for 100 ns;
-		x <= "01100100";
-      wait for 100 ns;
-		x <= "01110101";
-		wait for 100 ns;
-		x <= "00001000";
-      wait for 100 ns;
-		x <= "10101010";
-      wait for 100 ns;
-		x <= "00100100";
-      wait;
+	
+		x					<=	"11111111111111111111111";
+		y0_expected		<=	"11111111111111111111111";
+		y1_expected		<=	"01111111111111111111111";
+		y22_expected	<=	"00000000000000000000001";
+		y23_expected	<=	"00000000000000000000000";
+		y24_expected	<=	"00000000000000000000000";
+      
+		wait;
+		
    end process;
-
 end;

@@ -12,7 +12,7 @@ entity RippleCarryAdder is
 	);
 	port (
 		x, y			: in	std_logic_vector(n-1 downto 0);	-- Operands
-		s				: out std_logic_vector(n-1 downto 0);	-- Result
+		result		: out std_logic_vector(n-1 downto 0);	-- Result
 		overflow		: out	std_logic								-- Output carry
 	);
 end RippleCarryAdder;
@@ -51,7 +51,7 @@ begin
 				port map (
 					x => x(i),
 					y => y(i),
-					s => s(i),
+					s => result(i),
 					c1 => carries(i)
 				);
 		end generate lower_bit;
@@ -63,7 +63,7 @@ begin
 					x => x(i),
 					y => y(i),
 					c0 => carries(i-1),
-					s => s(i),
+					s => result(i),
 					c1 => carries(i)
 				);
 		end generate upper_bits;

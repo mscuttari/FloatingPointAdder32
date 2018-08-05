@@ -11,57 +11,62 @@ end TestAbsoluteValue;
  
 architecture behavior of TestAbsoluteValue is 
 	component AbsoluteValue
-		generic ( n : integer );
+		generic (
+			n : integer
+		);
 		port (
 			x	: 	in 	std_logic_vector(0 to n-1);
-			y	: 	out	std_logic_vector(0 to n-1)
+			y	: 	out	std_logic_vector(0 to n-2)
 		);
 	end component;
    
-   signal x, y 	: 	std_logic_vector(0 to 7);
+   signal x				:	std_logic_vector(0 to 8);
+	signal y				:	std_logic_vector(0 to 7);
+	
+	signal y_expected	:	std_logic_vector(0 to 7);
+	
+	signal check		:	std_logic;
 
 begin
+
    uut: AbsoluteValue
-		generic map( n => 8 )
+		generic map (
+			n => 9
+		)
 		port map (
-         x => x,
-         y => y
+         x	=>	x,
+         y	=> y
 		);
+		
+	test: check <= '1' when y = y_expected else '0';
 
    stim_proc: process
    begin
-		-- Expected result: 00000000
-		x <= "00000000";
-      wait for 100 ns;
+	
+		--	Positive value
+		x				<=	"010010110";
+		y_expected	<=	 "10010110";
 		
-		-- Expected result: 00000001
-		x <= "00000001";
-		wait for 100 ns;
+		wait for 250 ns;
 		
-		-- Expected result: 01111111
-		x <= "01111111";
-      wait for 100 ns;
+		--	Negative value
+		x				<=	"110010110";
+		y_expected	<=	 "01101010";
 		
-		-- Expected result: 10000000
-		x <= "10000000";
-		wait for 100 ns;
+		wait for 250 ns;
 		
-		-- Expected result: 00000001
-		x <= "11111111";
-		wait for 100 ns;
+		--	Zero value with positive sign
+		x				<=	"000000000";
+		y_expected	<=	 "00000000";
 		
-		-- Expected result: 01110001
-		x <= "10001111";
-		wait for 100 ns;
+		wait for 250 ns;
 		
-		-- Expected result: 01010110
-		x <= "10101010";
-		wait for 100 ns;
+		--	Zero value with negative sign
+		x				<=	"100000000";
+		y_expected	<=	 "00000000";
 		
-		-- Expected result: 01010101
-		x <= "01010101";
-      wait;
+		wait;
 		
-   end process;
-
+	end process;
+	
 end;
