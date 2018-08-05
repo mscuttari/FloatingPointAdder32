@@ -16,7 +16,10 @@ entity FullAdder is
 end FullAdder;
 
 architecture Behavioral of FullAdder is
+
 begin
+
 	s <= x xor y xor c0;
 	c1 <= (x and y) or (x and c0) or (y and c0);
+	
 end Behavioral;

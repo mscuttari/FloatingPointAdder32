@@ -15,7 +15,10 @@ entity HalfAdder is
 end HalfAdder;
 
 architecture Behavioral of HalfAdder is
+
 begin
+
 	s <= x xor y;
 	c1 <= (x and y);
+	
 end Behavioral;

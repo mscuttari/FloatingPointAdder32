@@ -12,22 +12,21 @@ end TestMain;
 architecture behavior of TestMain is 
 	component Main
 		port (
-			CLK								: 	in		std_logic;
-			a, b								: 	in		std_logic_vector(31 downto 0);
-			result							: 	out	std_logic_vector(31 downto 0);
+			CLK									: 	in		std_logic;
+			a, b									: 	in		std_logic_vector(31 downto 0);
+			result								: 	out	std_logic_vector(31 downto 0);
 			
-			stg1_special_case_flag		:	out	std_logic;
-			stg1_special_case_result	:	out	std_logic_vector(31 downto 0);
-			stg1_operand_1					:	out	std_logic_vector(36 downto 0);
-			stg1_operand_2					:	out	std_logic_vector(36 downto 0);
-			stg1_d 							:	out 	std_logic_vector(0 to 7);
-			stg1_d_abs 						: 	out	std_logic_vector(0 to 7);
+			stg1_special_case_flag			:	out	std_logic;
+			stg1_special_case_result		:	out	std_logic_vector(31 downto 0);
+			stg1_operand_1						:	out	std_logic_vector(31 downto 0);
+			stg1_operand_2						:	out	std_logic_vector(31 downto 0);
+			stg1_mantissa_shift_amount		: 	out	std_logic_vector(0 to 7);
 			
-			stg2_operand_1					:	out	std_logic_vector(36 downto 0);
-			stg2_operand_1_shifted		:	out	std_logic_vector(36 downto 0);
+			stg2_special_case_flag			:	out	std_logic;
+			stg2_special_case_result		:	out	std_logic_vector(31 downto 0);
+			stg2_sum								:	out	std_logic_vector(36 downto 0);
 			
-			stg3_mantissa_shift			:	out	std_logic_vector(0 to 4);
-			stg3_exponent_increase		:	out	std_logic_vector(0 to 7)
+			stg3_special_case_flag			:	out	std_logic
 		);
 	end component;
 	
@@ -36,24 +35,27 @@ architecture behavior of TestMain is
    signal a, b 	: std_logic_vector(31 downto 0);
 	signal result 	: std_logic_vector(31 downto 0);
 	
+	signal result_expected						:	std_logic_vector(31 downto 0);
+	
+	signal check									:	std_logic;
+	
 	-- Debug
-	signal stage1_special_case_flag		:	std_logic;
-	signal stage1_special_case_result	:	std_logic_vector(31 downto 0);
-	signal stage1_operand_1					:	std_logic_vector(36 downto 0);
-	signal stage1_operand_2					:	std_logic_vector(36 downto 0);
-	signal stage1_d 							: 	std_logic_vector(0 to 7);
-	signal stage1_d_abs 						: 	std_logic_vector(0 to 7);
+	signal stage1_special_case_flag			:	std_logic;
+	signal stage1_special_case_result		:	std_logic_vector(31 downto 0);
+	signal stage1_operand_1						:	std_logic_vector(31 downto 0);
+	signal stage1_operand_2						:	std_logic_vector(31 downto 0);
+	signal stage1_mantissa_shift_amount		: 	std_logic_vector(0 to 7);
 	
-	signal stage2_operand_1					:	std_logic_vector(36 downto 0);
-	signal stage2_operand_1_shifted		:	std_logic_vector(36 downto 0);
+	signal stage2_special_case_flag			:	std_logic;
+	signal stage2_special_case_result		:	std_logic_vector(31 downto 0);
 	
-	signal stage3_mantissa_shift			:	std_logic_vector(4 downto 0);
-	signal stage3_exponent_increase		:	std_logic_vector(7 downto 0);
+	signal stage3_special_case_flag			:	std_logic;
 	
    -- Clock period
-   constant CLK_period : time := 55 ns;
+   constant CLK_period : time := 100 ns;
 	
 begin
+
 	-- Clock definition
    CLK_process: process
    begin
@@ -70,78 +72,258 @@ begin
          b 			=> b,
          result	=> result,
 			
-			stg1_special_case_flag		=>	stage1_special_case_flag,
-			stg1_special_case_result	=>	stage1_special_case_result,
-			stg1_operand_1					=>	stage1_operand_1,
-			stg1_operand_2					=>	stage1_operand_2,
-			stg1_d 							=>	stage1_d,
-			stg1_d_abs 						=>	stage1_d_abs,
+			stg1_special_case_flag				=>	stage1_special_case_flag,
+			stg1_special_case_result			=>	stage1_special_case_result,
+			stg1_operand_1							=>	stage1_operand_1,
+			stg1_operand_2							=>	stage1_operand_2,
+			stg1_mantissa_shift_amount 		=>	stage1_mantissa_shift_amount,
 			
-			stg2_operand_1					=>	stage2_operand_1,
-			stg2_operand_1_shifted		=>	stage2_operand_1_shifted,
+			stg2_special_case_flag				=>	stage2_special_case_flag,
+			stg2_special_case_result			=>	stage2_special_case_result,
 			
-			stg3_mantissa_shift			=>	stage3_mantissa_shift,
-			stg3_exponent_increase		=>	stage3_exponent_increase
+			stg3_special_case_flag				=>	stage3_special_case_flag
 		);
+		
+	test:	check <= '1' when result = result_expected
+						else '0';
 	
    stim_proc: process
    begin
+	
+		result_expected <= "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
+	
 		wait for CLK_period * 4;
 		
-		a <= "01000010010010010000000000000000";	-- 50,25
-		b <= "11000010111011010000000000000000";	-- -118,5
-		-- 11000010100010001000000000000000			--	-68,25
+		-- Test 1
+		a <= "00000000000000000000000000000000";
+		b <= "01111110110101010101010101010101";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
+		wait for CLK_period / 2;
 		
-		a <= "01000001011000000000000000000000";	--	14.0
-		b <= "00111111111111111111111111111111";	--	1.9999999
-		--	01000001100000000000000000000000			--	16.0
+		-- Test 2
+		a <= "01111111010101010101010101010101";
+		b <= "11111111100000000000000000000000";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
+		wait for CLK_period / 2;
 		
-		a <= "00000000010000000000000000000000";
-		b <= "00000000010000000000000000000000";
-		--	00000000100000000000000000000000
+		-- Test 3
+		a <= "11111111100000000000000000000000";
+		b <= "11111111100000000000000000000000";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
+		wait for CLK_period / 2;
 		
-		a <= "00000000110000000000000000000000";
-		b <= "00000000001000000000000000000000";
-		--	00000000111000000000000000000000
+		-- Test 4
+		a <= "11111111100000000000000000000000";
+		b <= "01111111100000000000000000000000";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
 		
-		a <= "00000000110000000000000000000000";
-		b <= "00000000011000000000000000000000";
-		-- 00000001000100000000000000000000
+		-- Result test 1
+		result_expected <= "01111110110101010101010101010101";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
 		
-		a <= "00000000110000000000000000000000";	--	CS1
-		b <= "10000000011000000000000000000000";
-		--	00000000011000000000000000000000
+		-- Test 5
+		a <= "11111111100000000000000000000000";
+		b <= "01111111110101010101010101010101";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
 		
-		a <= "00000000110000000000000000000000";	-- CS2
-		b <= "10000000011100000000000000000000";
-		--	00000000010100000000000000000000
+		-- Result test 2
+		result_expected <= "11111111100000000000000000000000";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
 		
-		a <= "00000000001100000000000000000000";
-		b <= "00000000001100000000000000000000";
-		--	00000000011000000000000000000000
+		-- Test 6
+		a <= "01111110110101010101010101010101";
+		b <= "11111110110101010101010101010001";
 		
-		wait for CLK_period * 4;
+		wait for CLK_period / 2;
 		
-		a <= "00000000011000000000000000000000";
-		b <= "10000001000000000000000000000000";
-		--	10000000101000000000000000000000"
+		-- Result test 3
+		result_expected <= "11111111100000000000000000000000";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 7
+		a <= "01111010101010100101010110101010";
+		b <= "11111010110101010101010101010101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 4
+		result_expected <= "01111111100000000000000000000001";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 8
+		a <= "11111101010011001100110011001100";
+		b <= "01111101001010100101010110101010";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 5
+		result_expected <= "01111111100000000000000000000001";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 9
+		a <= "11111000010111011101110111011101";
+		b <= "11111000010111001101110011011100";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 6
+		result_expected <= "01110100000000000000000000000000";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 10
+		a <= "01111100110111011101110111011101";
+		b <= "01111011110111001101110011011100";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 7
+		result_expected <= "11111001101010111111111010101100";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 11
+		a <= "00000000010101010101010101010001";
+		b <= "00000000010101010101010101010101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 8
+		result_expected <= "11111100000010011101110010001000";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 12
+		a <= "00000000011111111111111111111111";
+		b <= "10000000001010100101010110101010";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 9
+		result_expected <= "11111000110111010101110101011101";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 13
+		a <= "00000000001010100101010110101010";
+		b <= "10000000011111111111111111111111";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 10
+		result_expected <= "01111101000010101000101010001010";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 14
+		a <= "10000000010111011101110111011101";
+		b <= "00000000000111011101110111011101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 11
+		result_expected <= "00000000101010101010101010100110";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 15
+		a <= "10000000010111001101110011011100";
+		b <= "10000000010111011101110111011101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 12
+		result_expected <= "00000000010101011010101001010101";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 16
+		a <= "00000010010101010101010101010001";
+		b <= "00000000010101010101010101010101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 13
+		result_expected <= "10000000010101011010101001010101";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 17
+		a <= "10000100010101010101010101010101";
+		b <= "10000000010101010101010101010101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 14
+		result_expected <= "10000000010000000000000000000000";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 18
+		a <= "00000101001010100101010110101010";
+		b <= "00000000011111111111111111111111";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 15
+		result_expected <= "10000000101110101011101010111001";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 19
+		a <= "10000000010101010101010101010101";
+		b <= "00000010100111011101110111011101";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 16
+		result_expected <= "00000010010111111111111111111100";
+		
+		wait for CLK_period / 2;
+		
+		-- Test 20
+		a <= "10000000010101010101010101010101";
+		b <= "00000111101010101010101010101010";
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 17
+		result_expected <= "10000100010101100000000000000000";
+		
+		wait for CLK_period / 2;
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 18
+		result_expected <= "00000101001010101001010110101010";
+		
+		wait for CLK_period / 2;
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 19
+		result_expected <= "00000010100110001000100010001000";
+		
+		wait for CLK_period / 2;
+		
+		wait for CLK_period / 2;
+		
+		-- Result test 20
+		result_expected <= "00000111101010101010100101010101";
+		
+		wait for CLK_period / 2;
 		
 		wait;
 		
    end process;
-
 end;

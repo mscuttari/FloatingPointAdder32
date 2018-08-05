@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Module Name:    	ParticularCaseAssignation
+-- Module Name:    	SpecialCaseAssignation
 -- Project Name: 		32 bit floating point adder
 -- Description: 		Examine particular input cases such as NaN or Infinity
 --
@@ -20,16 +20,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity ParticularCaseAssignation is
+entity SpecialCaseAssignation is
 	port (
 		a					:	in 	std_logic_vector(31 downto 0);			-- First operand
 		b					:	in 	std_logic_vector(31 downto 0);			-- Second operand
 		enable			:	out	std_logic;										-- Enable signal
 		result			:	out	std_logic_vector(31 downto 0)				-- Result
 	);
-end ParticularCaseAssignation;
+end SpecialCaseAssignation;
 
-architecture Behavioral of ParticularCaseAssignation is
+architecture Behavioral of SpecialCaseAssignation is
 
 	-- Operand A
 	alias Sa is a(31);						-- A sign
@@ -50,7 +50,7 @@ begin
 	
 	process (a, b, Sa, Ea, Ma, Sb, Eb, Mb)
 	begin
-		-- 0 + anything = anything
+		-- Zero + anything = anything
 		if (	Ea = "00000000" and
 				Ma = "00000000000000000000000") then
 			
@@ -59,7 +59,7 @@ begin
 			E <= Eb;
 			M <= Mb;
 			
-		-- anything + 0 = anything
+		-- Anything + zero = anything
 		elsif (	Eb = "00000000" and
 					Mb = "00000000000000000000000") then
 			
@@ -119,6 +119,26 @@ begin
 			S <= '0';
 			E <= "11111111";
 			M <= "00000000000000000000001";
+			
+			-- Infinity + anything (different from NaN) = Infinity
+		elsif (Ea = "11111111" and
+				 Ma = "00000000000000000000000" and
+				 not(Eb = "11111111")) then
+			
+			enable <= '1';
+			S <= Sa;
+			E <= Ea;
+			M <= Ma;
+			
+		-- Anything (different from NaN) + Infinity = Infinity
+		elsif (Eb = "11111111" and
+				 Mb = "00000000000000000000000" and
+				 not(Ea = "11111111")) then
+			
+			enable <= '1';
+			S <= Sb;
+			E <= Eb;
+			M <= Mb;
 		
 		-- NaN + anything = NaN
 		elsif (Ea = "11111111") then
@@ -128,7 +148,7 @@ begin
 			E <= "11111111";
 			M <= "00000000000000000000001";
 		
-		-- anything + NaN = NaN
+		-- Anything + NaN = NaN
 		elsif (Eb = "11111111") then
 			
 			enable <= '1';
@@ -136,6 +156,7 @@ begin
 			E <= "11111111";
 			M <= "00000000000000000000001";
 		
+		--	Opposite values
 		elsif (Sa = not Sb and
 					Ea = Eb and
 					Ma = Mb) then
@@ -145,7 +166,7 @@ begin
 			E <= "00000000";
 			M <= "00000000000000000000000";
 			
-		-- no particular case found
+		-- No special cases found
 		else
 			enable <= '0';
 			S <= '-';

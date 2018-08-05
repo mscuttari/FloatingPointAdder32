@@ -12,14 +12,26 @@ entity LeftShifter is
 		s	:	integer			--	Shift amount
 	);
 	port (
-		x	:	in 	std_logic_vector(0 to n-1);	-- Input data
-		y	:	out	std_logic_vector(0 to n-1)		-- Output data
+		x	:	in 	std_logic_vector(n-1 downto 0);	-- Input data
+		y	:	out	std_logic_vector(n-1 downto 0)		-- Output data
 	);
 end LeftShifter;
 
 architecture Behavioral of LeftShifter is
-	signal zero : std_logic_vector(0 to n-1) := (others => '0');
-begin
-	y <= x(s to n-1) & zero(0 to s-1);
-end Behavioral;
 
+	constant zero : std_logic_vector(n-1 downto 0) := (others => '0');
+
+begin
+
+	process(x)
+	begin
+		if (s = 0) then
+			y <= x;
+		elsif (s >= n) then
+			y <= zero;
+		else
+			y <= x(n-s-1 downto 0) & zero(s-1 downto 0);
+		end if;
+	end process;
+
+end Behavioral;

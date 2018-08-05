@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
--- Module Name:   TestRightShifter
+-- Module Name:   TestTwoComplement
 -- Project Name:  FloatingPointAdder32
--- Description:   VHDL test bench for module RightShifter
+-- Description:   VHDL test bench for module TwoComplement
 --------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -11,54 +11,64 @@ end TestTwoComplement;
  
 architecture behavior of TestTwoComplement is 
 	component TwoComplement
-		generic ( n : integer );
+		generic (
+			n : integer
+		);
 		port (
 			x			: in  	std_logic_vector(0 to n-1);
-			y			: out 	std_logic_vector(0 to n-1);
-			overflow	: out		std_logic
+			y			: out 	std_logic_vector(0 to n-1)
 		);
 	end component;
    
    -- Inputs
-   signal x : std_logic_vector(0 to 7) := (others => '0');
+   signal x : std_logic_vector(0 to 7);
 
  	-- Outputs
-	signal y 			: std_logic_vector(0 to 7);
-	signal overflow	: std_logic;
+	signal y : std_logic_vector(0 to 7);
+	
+	signal y_expected	:	std_logic_vector(0 to 7);
+	
+	signal check		:	std_logic;
 
 begin
    uut: TwoComplement
-		generic map( n => 8 )
+		generic map (
+			n => 8
+		)
 		port map (
-         x => x,
-         y => y,
-			overflow => overflow
+         x 			=> x,
+         y 			=> y
 		);
+		
+	test: check <= '1' when y = y_expected
+						else '0';
 
    stim_proc: process
    begin
-		wait for 100 ns;
 		
-		x <= "11111111";
-      wait for 100 ns;
+		-- All '0' bits
+		x				<= "00000000";
+		y_expected	<= "00000000";
 		
-		x <= "00000000";
-		wait for 100 ns;
+		wait for 250 ns;
 		
-		x <= "01100100";
-      wait for 100 ns;
+		--	Generic value
+		x				<= "10101010";
+		y_expected	<= "01010110";
 		
-		x <= "01110101";
-		wait for 100 ns;
+		wait for 250 ns;
 		
-		x <= "00001000";
-      wait for 100 ns;
+		-- Only one '1' bit
+		x				<= "00000001";
+		y_expected	<= "11111111";
 		
-		x <= "10101010";
-      wait for 100 ns;
+		wait for 250 ns;
 		
-		x <= "00100100";
-      wait;
+		-- All '1' bits
+		x				<= "11111111";
+		y_expected	<= "00000001";
+		
+		wait;
+		
    end process;
-
 end;

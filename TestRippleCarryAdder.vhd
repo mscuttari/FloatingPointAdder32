@@ -12,22 +12,26 @@ end TestRippleCarryAdder;
 architecture behavior of TestRippleCarryAdder is 
 	component RippleCarryAdder
 		generic (
-			n	: integer													-- Data size
+			n	: integer
 		);
 		port (
-			x, y			: in	std_logic_vector(0 to n-1);		-- Operands
-			s				: out std_logic_vector(0 to n-1);		-- Result
-			overflow		: out	std_logic								-- Overflow signal
+			x, y			: in	std_logic_vector(n-1 downto 0);
+			result		: out std_logic_vector(n-1 downto 0);
+			overflow		: out	std_logic
 		);
 	end component;
    
-   
 	-- Input data
-   signal x, y	: std_logic_vector(0 to 7) := "00000000";
+   signal x, y			: std_logic_vector(7 downto 0);
 	
 	-- Output data
-	signal s				: std_logic_vector(0 to 7);
+	signal result		: std_logic_vector(7 downto 0);
 	signal overflow	: std_logic;
+	
+	signal result_expected		:	std_logic_vector(7 downto 0);
+	signal overflow_expected	:	std_logic;
+	
+	signal check	:	std_logic;
 
 begin
    uut: RippleCarryAdder
@@ -35,31 +39,46 @@ begin
 			n => 8
 		)
 		port map (
-         x => x,
-         y => y,
-			s => s,
+         x 			=> x,
+         y 			=> y,
+			result	=> result,
 			overflow => overflow
 		);
+		
+	test:	check <= '1' when result = result_expected and
+									overflow = overflow_expected
+						else '0';
 
    stim_proc: process
    begin
-		wait for 100 ns;
 		
-		x <= "01111110";
-		y <= "00000001";
-		wait for 100 ns;
+		x						<= "00000000";
+		y						<= "00000000";
+		result_expected	<=	"00000000";
+		overflow_expected	<=	'0';
 		
-		x <= "01111111";
-		y <= "01111111";
-		wait for 100 ns;
+		wait for 250 ns;
 		
-		x <= "11111111";
-		y <= "01111111";
-      wait for 100 ns;
+		x						<= "00111001";
+		y						<= "00010111";
+		result_expected	<=	"01010000";
+		overflow_expected	<=	'0';
 		
-		x <= "11111111";
-		y <= "11111111";
-      wait;
-   end process;
+		wait for 250 ns;
+		
+		x						<= "11100100";
+		y						<= "01011100";
+		result_expected	<=	"01000000";
+		overflow_expected	<=	'1';
 
+		wait for 250 ns;
+		
+		x						<= "11111111";
+		y						<= "11111111";
+		result_expected	<=	"11111110";
+		overflow_expected	<=	'1';		
+      
+		wait;
+		
+   end process;
 end;

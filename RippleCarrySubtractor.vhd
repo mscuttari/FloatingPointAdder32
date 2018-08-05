@@ -12,7 +12,7 @@ entity RippleCarrySubtractor is
 	);
 	port (
 		x, y			: in	std_logic_vector(n-1 downto 0);	-- Operands
-		s				: out std_logic_vector(n-1 downto 0);	-- Result
+		result		: out std_logic_vector(n-1 downto 0);	-- Result
 		result_sign	: out	std_logic								-- Result sign
 	);
 end RippleCarrySubtractor;
@@ -30,9 +30,9 @@ architecture Behavioral of RippleCarrySubtractor is
 	end component;
 	
 	-- Extended signals
-	signal x_extended	:	std_logic_vector(n downto 0);
-	signal y_extended	:	std_logic_vector(n downto 0);
-	signal s_extended	:	std_logic_vector(n downto 0);
+	signal x_extended			:	std_logic_vector(n downto 0);
+	signal y_extended			:	std_logic_vector(n downto 0);
+	signal result_extended	:	std_logic_vector(n downto 0);
 	
 	-- Vector of carries
 	signal carries : std_logic_vector(n+1 downto 0);
@@ -51,13 +51,13 @@ begin
 				x => x_extended(i),
 				y => not y_extended(i),
 				c0 => carries(i),
-				s => s_extended(i),
+				s => result_extended(i),
 				c1 => carries(i+1)
 			);
 	
 	end generate gen_adder;
 	
-	s <= s_extended(n-1 downto 0);
-	result_sign <= s_extended(n);
+	result <= result_extended(n-1 downto 0);
+	result_sign <= result_extended(n);
 	
 end Behavioral;

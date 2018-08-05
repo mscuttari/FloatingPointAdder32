@@ -1,3 +1,8 @@
+--------------------------------------------------------------------------------
+-- Module Name:   TestRounder
+-- Project Name:  FloatingPointAdder32
+-- Description:   VHDL test bench for module Rounder
+--------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
  
@@ -7,42 +12,44 @@ end TestRounder;
 architecture behavior of TestRounder is 
 
     component Rounder
-		generic (
-			g	:	integer
-		);
 		port (
-         i	:	in		std_logic_vector(g-1 downto 0);
-         o	:	out	std_logic
+         x	:	in		std_logic_vector(3 downto 0);
+         y	:	out	std_logic
       );
     end component;
     
+   -- Inputs
+   signal x : std_logic_vector(3 downto 0);
 
-   --Inputs
-   signal i : std_logic_vector(3 downto 0) := (others => '0');
-
- 	--Outputs
-   signal o : std_logic;
+ 	-- Outputs
+   signal y : std_logic;
+	
+	signal y_expected : std_logic;
+	
+	signal check : std_logic;
 	
 begin
  
 	uut: Rounder
-	generic map (
-		g => 4
-	)
-	port map (
-		i => i,
-      o => o
-	);
+		port map (
+			x => x,
+			y => y
+		);
+
+	test: check <= '1' when y = y_expected else '0';
 
    stim_proc: process
    begin
-      wait for 100 ns;	
-		i <= "0111";
-		wait for 100 ns;	
-		i <= "1000";
-		wait for 100 ns;	
-		i <= "1001";
-      wait;
+		
+		x <= "0111";
+		y_expected <= '0';
+		
+		wait for 500 ns;
+		
+		x <= "1000";
+		y_expected <= '1';
+		
+		wait;
+		
    end process;
-
 end;

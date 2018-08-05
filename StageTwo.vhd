@@ -8,67 +8,80 @@ use ieee.std_logic_1164.all;
 
 entity StageTwo is
 	port (
-		CLK							:	in		std_logic;								-- Clock signal
-		special_case_flag_in		:	in		std_logic;								-- Whether the operands leads to a special case
-		special_case_result_in	:	in		std_logic_vector(31 downto 0);	-- Special case result
-		operand_1_in				:	in		std_logic_vector(36 downto 0);	-- Operand with the lowest exponent
-		operand_2_in				:	in		std_logic_vector(36 downto 0);	-- Operand with the highest exponent
-		exp_difference_in			:	in		std_logic_vector(0 to 7);			-- Difference between operand A and operand B exponents
-		exp_difference_abs_in	:	in		std_logic_vector(0 to 7);			-- Difference between the highest and the lowest exponent
-		special_case_flag_out	:	out	std_logic;								-- special_case_flag
-		special_case_result_out	:	out	std_logic_vector(31 downto 0);	-- special_case_result
-		sum							:	out	std_logic_vector(36 downto 0);	-- Sum between the two operands
-		overflow						:	out	std_logic;								--	Sum overflow
-		
-		-- Debug
-		operand_1_out				:	out	std_logic_vector(36 downto 0);	-- operand_1_in
-		operand_1_shifted			:	out	std_logic_vector(36 downto 0)		-- operand_1_in with shifted mantissa
+		CLK								:	in		std_logic;								-- Clock signal
+		special_case_flag_in			:	in		std_logic;								-- Whether the operands leads to a special case
+		special_case_result_in		:	in		std_logic_vector(31 downto 0);	-- Special case result
+		operand_1						:	in		std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
+		operand_2						:	in		std_logic_vector(31 downto 0);	-- Operand with the highest exponent
+		mantissa_shift_amount		:	in		std_logic_vector(0 to 7);			-- Difference between the highest and the lowest exponent
+		special_case_flag_out		:	out	std_logic;								-- Whether there is a special case or not
+		special_case_result_out		:	out	std_logic_vector(31 downto 0);	-- Special case result
+		sum								:	out	std_logic_vector(36 downto 0)		-- Sum between the two operands
 	);
 end StageTwo;
 
 architecture Behavioral of StageTwo is
 	
-	constant registers_number : integer := 145;
+	constant registers_number : integer := 70;
+	
+	-- Operands with extended mantissa
+	signal operand_1_extended	:	std_logic_vector(36 downto 0);
+	signal operand_2_extended	:	std_logic_vector(36 downto 0);
 	
 	-- Operand with the lowest exponent
-	alias sign_1_in is operand_1_in(36);
-	alias exponent_1_in is operand_1_in(35 downto 28);
-	alias mantissa_1_in is operand_1_in(27 downto 0);
+	alias sign_1		is operand_1_extended(36);
+	alias exponent_1	is operand_1_extended(35 downto 28);
+	alias mantissa_1	is operand_1_extended(27 downto 0);
+		
+	-- Operand with the highest exponent
+	alias sign_2		is operand_2_extended(36);
+	alias exponent_2	is operand_2_extended(35 downto 28);
+	alias mantissa_2	is operand_2_extended(27 downto 0);
 	
 	-- Temporary signals
 	-- "_dff" is used to indicate the signal before entering the registers
 	
-	-- Operand with the lowest exponent
-	signal operand_1_dff	:	std_logic_vector(36 downto 0);
-	alias sign_1_dff is operand_1_dff(36);
-	alias exponent_1_dff is operand_1_dff(35 downto 28);
-	alias mantissa_1_dff is operand_1_dff(27 downto 0);
+	signal normalized_1_flag	:	std_logic;								--	Whether the first value is normalized
+	signal normalized_2_flag	:	std_logic;								--	Whether the second value is normalized
 	
-	-- Operand with the highest exponent
-	signal operand_2_dff	:	std_logic_vector(36 downto 0);
-	alias sign_2_dff is operand_2_dff(36);
-	alias exponent_2_dff is operand_2_dff(35 downto 28);
-	alias mantissa_2_dff is operand_2_dff(27 downto 0);
+	-- Mantissa of the operand with the lowest exponent
+	signal mantissa_1_dff	:	std_logic_vector(27 downto 0);
 	
 	-- Sum between the two operands
-	signal sum_dff	:	std_logic_vector(36 downto 0);
-	alias sign_sum_dff is sum_dff(36);
-	alias exponent_sum_dff is sum_dff(35 downto 28);
-	alias mantissa_sum_dff is sum_dff(27 downto 0);
+	signal sum_dff				:	std_logic_vector(36 downto 0);
+	signal sum_normal_dff	:	std_logic_vector(36 downto 0);
+	alias sign_sum_dff		is sum_normal_dff(36);
+	alias exponent_sum_dff	is sum_normal_dff(35 downto 28);
+	alias mantissa_sum_dff	is sum_normal_dff(27 downto 0);
 	
 	--	Sum overflow
 	signal sum_overflow	:	std_logic;
 	signal overflow_dff	:	std_logic;
 	
-	signal M1_M2_sum					:	std_logic_vector(27 downto 0);		-- M1 + M2
-	signal M1_M2_difference			:	std_logic_vector(27 downto 0);		-- M1 - M2
-	signal M1_M2_difference_sign	:	std_logic;									-- Sign of M1 - M2
-	signal M2_M1_difference			:	std_logic_vector(27 downto 0);		-- M2 - M1
+	signal M1_M2_sum						:	std_logic_vector(27 downto 0);		-- M1 + M2
+	signal overflow						:	std_logic;									--	M1 + M2 overflow signal
+	signal M1_M2_difference				:	std_logic_vector(27 downto 0);		-- M1 - M2
+	signal mantissa_difference_sign	:	std_logic;									-- Sign of the difference between M1 and M2
+	signal M2_M1_difference				:	std_logic_vector(27 downto 0);		-- M2 - M1
+	
+	--	Intermediate results
+	signal mantissa_sum					:	std_logic_vector(27 downto 0);		-- Intermediate mantissa result
+	signal exponent_sum					:	std_logic_vector(7 downto 0);			--	Intermediate exponent result
+	
+	--	Results used with positive overflow signal
+	signal mantissa_after_sum_shift	:	std_logic_vector(27 downto 0);		--	1-position shifted mantissa (after sum)
+	signal mantissa_after_overflow	:	std_logic_vector(27 downto 0);		--	Mantissa with positive overflow
+	signal exponent_after_sum_shift	:	std_logic_vector(7 downto 0);			--	Exponent with positive overflow
+	
+	-- Special cases
+	signal sum_infinite_check			:	std_logic;
+	signal special_case_flag_dff		:	std_logic;
+	signal special_case_result_dff	:	std_logic_vector(31 downto 0);
 	
 	-- Registers
 	signal D, Q : std_logic_vector(0 to registers_number - 1);
 	
-	component RegisterN
+	component Registers
 		generic (
 			n : integer
 		);
@@ -79,11 +92,20 @@ architecture Behavioral of StageTwo is
 		);
 	end component;
 	
+	-- Mantissa extender
+	component MantissaExtender
+		port (
+			input_mantissa		:	in		std_logic_vector(22 downto 0);
+			normalized			:	in		std_logic;
+			output_mantissa	:	out	std_logic_vector(27 downto 0)
+		);
+	end component;
+	
 	-- Mantissa right shifter
 	component MantissaRightShifter
 		port (
 			x				:	in 	std_logic_vector(27 downto 0);
-			pos			:	in		std_logic_vector(4 downto 0);
+			pos			:	in		std_logic_vector(7 downto 0);
 			y				:	out	std_logic_vector(27 downto 0)
 		);
 	end component;
@@ -94,8 +116,8 @@ architecture Behavioral of StageTwo is
 			n : integer
 		);
 		port (
-			x, y 		: in  	std_logic_vector(0 to n-1);
-			s			: out		std_logic_vector(0 to n-1);
+			x, y 		: in  	std_logic_vector(n-1 downto 0);
+			result	: out		std_logic_vector(n-1 downto 0);
 			overflow	: out		std_logic
 		);
 	end component;
@@ -106,27 +128,71 @@ architecture Behavioral of StageTwo is
 			n : integer
 		);
 		port (
-			x, y 			: in  	std_logic_vector(0 to n-1);
-			s				: out		std_logic_vector(0 to n-1);
+			x, y 			: in  	std_logic_vector(n-1 downto 0);
+			result		: out		std_logic_vector(n-1 downto 0);
 			result_sign	: out		std_logic
+		);
+	end component;
+	
+	-- Right shifter
+	component RightShifter
+		generic (
+			n : integer;
+			s : integer
+		);
+		port (
+			x 	: in  	std_logic_vector(n-1 downto 0);
+			y	: out 	std_logic_vector(n-1 downto 0)
 		);
 	end component;
 
 begin
-
-	-- Copy operand 2
-	operand_2_dff <= operand_2_in;
 	
-	-- Copy sign and exponent of O1
-	sign_1_dff 		<=	sign_1_in;
-	exponent_1_dff <=	exponent_1_in;
+	-- Copy signs and exponents
+	sign_1 		<= operand_1(31);
+	exponent_1 	<= operand_1(30 downto 23);
+	sign_2 		<= operand_2(31);
+	exponent_2 	<= operand_2(30 downto 23);
+	
+
+	--	Check whether input values are normalized
+	normalized_1_flag	<=	'0' when exponent_1 = "00000000" else '1';
+	normalized_2_flag	<=	'0' when exponent_2 = "00000000" else '1';
+	
+	-- Mantissa 1 extension
+	mantissa_1_extender:	MantissaExtender
+		port map (
+			input_mantissa		=>	operand_1(22 downto 0),
+			normalized			=>	normalized_1_flag,
+			output_mantissa	=> mantissa_1
+		);
+	
+	-- Mantissa 2 extension
+	mantissa_extender_2:	MantissaExtender
+		port map (
+			input_mantissa		=>	operand_2(22 downto 0),
+			normalized			=>	normalized_2_flag,
+			output_mantissa	=> mantissa_2
+		);
 	
 	-- Mantissa right shifter
 	mantissa_right_shifter: MantissaRightShifter
 		port map (
-			x 				=> mantissa_1_in,
-			pos 			=> exp_difference_abs_in(3 to 7),
-			y 				=> mantissa_1_dff
+			x 		=> mantissa_1,
+			pos 	=> mantissa_shift_amount,
+			y 		=> mantissa_1_dff
+		);
+	
+	-- M1 + M2
+	mantissa_sum_component: RippleCarryAdder
+		generic map (
+			n => 28
+		)
+		port map (
+         x 				=> mantissa_1_dff,
+			y 				=> mantissa_2,
+			result		=> M1_M2_sum,
+			overflow 	=> sum_overflow
 		);
 	
 	-- M1 - M2
@@ -136,9 +202,9 @@ begin
 		)
 		port map (
          x 				=> mantissa_1_dff,
-			y 				=> mantissa_2_dff,
-			s 				=> M1_M2_difference,
-			result_sign	=>	M1_M2_difference_sign
+			y 				=> mantissa_2,
+			result		=> M1_M2_difference,
+			result_sign	=>	mantissa_difference_sign
 		);
 	
 	-- M2 - M1
@@ -147,60 +213,82 @@ begin
 			n => 28
 		)
 		port map (
-         x => mantissa_2_dff,
-			y => mantissa_1_dff,
-			s => M2_M1_difference
+         x			=> mantissa_2,
+			y			=> mantissa_1_dff,
+			result	=> M2_M1_difference
 		);
 	
 	-- Sign
-	sign_sum_dff <= sign_2_dff when M1_M2_difference_sign = '1' else
-						 sign_1_dff;
-	
-	-- Exponent
-	exponent_sum_dff <= exponent_2_dff;
+	sign_sum_dff <= sign_2 when mantissa_difference_sign = '1' else sign_1;
 	
 	-- Mantissa
-	mantissa_sum: RippleCarryAdder
+	mantissa_sum <=	M1_M2_sum			when	sign_1 = sign_2						else
+							M1_M2_difference	when	mantissa_difference_sign = '0'	else
+							M2_M1_difference	when	mantissa_difference_sign = '1'	else
+							(others => '-');
+	
+	-- Exponent
+	exponent_sum <= exponent_2;
+	
+	-- Overflow
+	overflow_dff <= '1' when (sum_overflow = '1' and sign_1 = sign_2) else '0';
+										
+	--	If the sum produced an overflow, insert a '1' as the most significant bit
+	right_shifter_sum: RightShifter
 		generic map (
-			n => 28
+			n	=> 28,
+			s	=> 1
 		)
 		port map (
-         x 				=> mantissa_1_dff,
-			y 				=> mantissa_2_dff,
-			s 				=> M1_M2_sum,
-			overflow 	=> sum_overflow
+			x 	=> mantissa_sum,
+			y 	=> mantissa_after_sum_shift
 		);
 	
-	mantissa_sum_dff <=	M1_M2_sum when sign_1_dff = sign_2_dff else
-								M1_M2_difference when M1_M2_difference_sign = '0' else
-								M2_M1_difference when M1_M2_difference_sign = '1' else
-								(others => '-');
-	overflow_dff	<=	'1'	when	(sum_overflow = '1' and sign_1_dff = sign_2_dff) else
-							'0';
+	mantissa_after_overflow <= '1' & mantissa_after_sum_shift(26 downto 0);
+		
+	-- If the sum produced an overflow, increase the exponent by 1	
+	exponent_increase_sum: RippleCarryAdder
+		generic map (
+			n => 8
+		)
+		port map (
+         x			=> exponent_sum,
+			y			=> "00000001",
+			result	=> exponent_after_sum_shift
+		);
 	
+	mantissa_sum_dff <= mantissa_after_overflow	when overflow_dff = '1' else mantissa_sum;
+	exponent_sum_dff <= exponent_after_sum_shift when overflow_dff = '1' else exponent_sum;
+												
+	-- Check if the sum produces an infinite value
+	sum_infinite_check <= '1' when overflow_dff = '1' and exponent_2 = "11111110" else '0';
+										
+	special_case_flag_dff <= '1' when (special_case_flag_in = '1') or (sum_infinite_check = '1') else '0';
+
+	special_case_result_dff	<=	sign_sum_dff & "1111111100000000000000000000000" when (sum_infinite_check = '1' and special_case_flag_in = '0') else
+										special_case_result_in;
+	
+	
+	sum_dff <= sum_normal_dff when special_case_flag_dff = '0' else
+				  "-------------------------------------";
+										
 	-- Connect the registers
-	registers: RegisterN
+	reg: Registers
 		generic map (
 			n => registers_number
 		)
 		port map (
-         CLK => CLK,
-			D => D,
-			Q => Q
+         CLK	=> CLK,
+			D		=> D,
+			Q		=> Q
 		);
 	
-	D <= 	special_case_flag_in &
-			special_case_result_in &
-			sum_dff &
-			overflow_dff &
-			operand_1_in &
-			operand_1_dff;
+	D <= 	special_case_flag_dff &
+			special_case_result_dff &
+			sum_dff;
 	
 	special_case_flag_out <= Q(0);
 	special_case_result_out <= Q(1 to 32);
 	sum <= Q(33 to 69);
-	overflow <= Q(70);
-	operand_1_out <= Q(71 to 107);
-	operand_1_shifted <= Q(108 to 144);
 	
 end Behavioral;

@@ -12,48 +12,50 @@ end TestMantissaExtender;
 architecture behavior of TestMantissaExtender is 
  
     component MantissaExtender
-		 generic (
-				i	:	integer;
-				g	:	integer
-		 );
-		 port(
-				input_mantissa 	: 	in  	std_logic_vector(i-1 downto 0);
+		 port (
+				input_mantissa 	: 	in  	std_logic_vector(22 downto 0);
 				normalized			:	in  	std_logic;
-				output_mantissa 	: 	out  	std_logic_vector(i+g downto 0)
+				output_mantissa 	: 	out  	std_logic_vector(27 downto 0)
 		 );
     end component;
-    
 
-   --Inputs
-   signal input_mantissa 	: 	std_logic_vector(22 downto 0) := (others => '0');
-   signal normalized 		: 	std_logic := '0';
+   -- Inputs
+   signal input_mantissa 	: 	std_logic_vector(22 downto 0);
+   signal normalized 		: 	std_logic;
 
- 	--Outputs
+ 	-- Outputs
    signal output_mantissa : std_logic_vector(27 downto 0);
+	
+	signal output_mantissa_expected	:	std_logic_vector(27 downto 0);
+	
+	signal check	:	std_logic;
  
 begin
  
    uut: MantissaExtender
-	generic map (
-		i => 23,
-		g => 4
-	)
-	port map (
-          input_mantissa => input_mantissa,
-          normalized => normalized,
-          output_mantissa => output_mantissa
-   );
+		port map (
+          input_mantissa	=> input_mantissa,
+          normalized			=> normalized,
+          output_mantissa	=> output_mantissa
+		);
+		
+	test:	check <= '1' when output_mantissa = output_mantissa_expected else '0';
 	
    stim_proc: process
+	
    begin		
-      wait for 100 ns;
-		input_mantissa <= "01010101010101010101011";
-		normalized <= '1';
-		wait for 100 ns;
-		input_mantissa <= "10101010101010101010101";
-		wait for 100 ns;
+      
+		input_mantissa <= "10000000000000000000001";
 		normalized <= '0';
+		output_mantissa_expected <= "0100000000000000000000010000";
+		
+		wait for 500 ns;
+		
+		input_mantissa <= "00000000000000000000001";
+		normalized <= '1';
+		output_mantissa_expected <= "1000000000000000000000010000";
+		
 		wait;
+		
    end process;
-
-END;
+end;

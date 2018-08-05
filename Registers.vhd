@@ -1,12 +1,12 @@
 ----------------------------------------------------------------------------------
--- Module Name:    	RegisterN
+-- Module Name:    	Registers
 -- Project Name: 		32 bit floating point adder
 -- Description: 		Block of n DFFs
 ----------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity RegisterN is
+entity Registers is
 	generic (
 		n 	: 	integer											-- Number of registers
 	);					
@@ -15,9 +15,9 @@ entity RegisterN is
 		D		: 	in 	std_logic_vector(0 to n-1);	-- Input data
 		Q		: 	out	std_logic_vector(0 to n-1)		-- Output data
 	);
-end RegisterN;
+end Registers;
 
-architecture Behavioral of RegisterN is
+architecture Behavioral of Registers is
 
 	component DFF
 		port (

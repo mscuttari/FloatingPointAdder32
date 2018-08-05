@@ -12,33 +12,36 @@ entity AbsoluteValue is
 	);
 	port (
 		x	: 	in 	std_logic_vector(0 to n-1);			-- Input data
-		y	: 	out	std_logic_vector(0 to n-1)				-- Output data
+		y	: 	out	std_logic_vector(0 to n-2)				-- Output data
 	);
 end AbsoluteValue;
 
 architecture Behavioral of AbsoluteValue is
 
 	component TwoComplement
-		generic ( n : integer);
+		generic (
+			n	:	integer
+		);
 		port (
-			x			: 	in 	std_logic_vector(0 to n-1);
-			y			: 	out	std_logic_vector(0 to n-1);
-			overflow	:	out	std_logic
+			x	: 	in 	std_logic_vector(0 to n-1);
+			y	: 	out	std_logic_vector(0 to n-1)
 		);
 	end component;
 	
-	signal x_c2		:	std_logic_vector(0 to n-1);
+	signal x_c2 : std_logic_vector(0 to n-2);
 
 begin
 
 	two_complement: TwoComplement
-		generic map ( n => n )
+		generic map (
+			n => n-1
+		)
 		port map (
-         x => x,
+         x => x(1 to n-1),
 			y => x_c2
 		);
 	
 	y <= 	x_c2 when x(0) = '1'
-			else x;
+			else x(1 to n-1);
 	
 end Behavioral;
