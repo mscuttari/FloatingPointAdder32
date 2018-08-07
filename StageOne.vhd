@@ -8,7 +8,6 @@ use ieee.std_logic_1164.all;
 
 entity StageOne is
 	port (
-		CLK							: 	in		std_logic;								-- Clock signal
 		a, b							: 	in		std_logic_vector(31 downto 0);	-- Operands
 		special_case_flag			:	out	std_logic;								-- Whether the operands leads to a special case
 		special_case_result		:	out	std_logic_vector(31 downto 0);	-- Special case result
@@ -19,23 +18,16 @@ entity StageOne is
 end StageOne;
 
 architecture Behavioral of StageOne is
-	
-	constant registers_number : integer := 105;
 
 	-- Temporary signals
-	-- "_dff" is used to indicate the signal before entering the registers
-	signal special_case_flag_dff			:	std_logic;								-- Whether the operands leads to a special case
-	signal special_case_result_dff		:	std_logic_vector(31 downto 0);	-- Special case result
 	signal exponent_A_real					:	std_logic_vector(7 downto 0);		--	Real exponent A
 	signal exponent_B_real					:	std_logic_vector(7 downto 0);		--	Real exponent B
 	signal operand_1_normal					:	std_logic_vector(31 downto 0);	-- Normally calculated operand with the lowest exponent
 	signal operand_2_normal					:	std_logic_vector(31 downto 0);	-- Normally calculated operand with the highest exponent
-	signal operand_1_dff						:	std_logic_vector(31 downto 0);	-- Operand with the lowest exponent
-	signal operand_2_dff						:	std_logic_vector(31 downto 0);	-- Operand with the highest exponent
 	signal exp_difference					:	std_logic_vector(8 downto 0);		--	Effective difference between operand A and B exponents (considering denormalized numbers too)
 	signal real_exp_difference_sign		:	std_logic;								--	Sign of the difference between exponents
 	signal mantissa_shift_amount_normal	:	std_logic_vector(0 to 7);			-- Normally calculated shift amount for the lowest exponent operand
-	signal mantissa_shift_amount_dff		:	std_logic_vector(0 to 7);			-- Shift amount for the lowest exponent operand
+	signal special_case_flag_internal	:	std_logic;
 	
 	-- Operand A
 	alias sign_A is a(31);
@@ -46,20 +38,6 @@ architecture Behavioral of StageOne is
 	alias sign_B is b(31);
 	alias exponent_B is b(30 downto 23);
 	alias mantissa_B is b(22 downto 0);
-	
-	-- Registers
-	signal D, Q : std_logic_vector(0 to registers_number - 1);
-	
-	component Registers
-		generic (
-			n : integer
-		);
-		port (
-			CLK	:	in		std_logic;
-			D		: 	in 	std_logic_vector(0 to n-1);
-			Q		: 	out	std_logic_vector(0 to n-1)
-		);
-	end component;
 	
 	-- Special cases
 	component SpecialCaseAssignation
@@ -113,9 +91,11 @@ begin
 		port map (
          a 					=>	a,
 			b 					=>	b,
-			enable 			=>	special_case_flag_dff,
-			result 			=>	special_case_result_dff
+			enable 			=>	special_case_flag_internal,
+			result 			=>	special_case_result
 		);
+	
+	special_case_flag <= special_case_flag_internal;
 	
 	-- Difference between exponents (result value will be used in the swap module)
 	sub_exp: RippleCarrySubtractor
@@ -141,11 +121,11 @@ begin
 			b 		=> operand_1_normal
 		);
 	
-	operand_1_dff <= operand_1_normal when special_case_flag_dff = '0' else
-						  "--------------------------------";
+	operand_1 <= operand_1_normal when special_case_flag_internal = '0' else
+					 "--------------------------------";
 	
-	operand_2_dff <= operand_2_normal when special_case_flag_dff = '0' else
-						  "--------------------------------";
+	operand_2 <= operand_2_normal when special_case_flag_internal = '0' else
+					 "--------------------------------";
 	
 	--	Check the real exponents of the operands
 	-- (this is used to calculate the real difference between the two exponents)
@@ -173,30 +153,7 @@ begin
 			y => mantissa_shift_amount_normal
 		);
 	
-	mantissa_shift_amount_dff <= mantissa_shift_amount_normal when special_case_flag_dff = '0' else
-										  "--------";
-	
-	-- Connect the registers
-	reg: Registers
-		generic map (
-			n => registers_number
-		)
-		port map (
-         CLK => CLK,
-			D => D,
-			Q => Q
-		);
-	
-	D <= 	special_case_flag_dff &
-			special_case_result_dff &
-			operand_1_dff &
-			operand_2_dff &
-			mantissa_shift_amount_dff;
-	
-	special_case_flag <= Q(0);
-	special_case_result <= Q(1 to 32);
-	operand_1 <= Q(33 to 64);
-	operand_2 <= Q(65 to 96);
-	mantissa_shift_amount <= Q(97 to 104);
+	mantissa_shift_amount <= mantissa_shift_amount_normal when special_case_flag_internal = '0' else
+									 "--------";
 	
 end Behavioral;

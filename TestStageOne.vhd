@@ -12,7 +12,6 @@ end TestStageOne;
 architecture behavior of TestStageOne is 
 	component StageOne
 		port (
-			CLK							: 	in		std_logic;
 			a, b							: 	in		std_logic_vector(31 downto 0);
 			special_case_flag			:	out	std_logic;
 			special_case_result		:	out	std_logic_vector(31 downto 0);
@@ -23,7 +22,6 @@ architecture behavior of TestStageOne is
 	end component;
 	
 	-- Data signals
-	signal CLK										:	std_logic;
 	signal a											:	std_logic_vector(31 downto 0);
 	signal b											:	std_logic_vector(31 downto 0);
 	signal special_case_flag					:	std_logic;
@@ -40,23 +38,10 @@ architecture behavior of TestStageOne is
 	
 	signal check	:	std_logic;
 	
-   -- Clock period
-   constant CLK_period : time := 55 ns;
-	
 begin
-
-	-- Clock definition
-   CLK_process: process
-   begin
-		CLK <= '0';
-		wait for CLK_period / 2;
-		CLK <= '1';
-		wait for CLK_period / 2;
-   end process;
 	
 	uut: StageOne
 		port map (
-			CLK							=>	CLK,
 			a								=>	a,
 			b								=>	b,
 			special_case_flag			=>	special_case_flag,
@@ -75,103 +60,76 @@ begin
 	
    stim_proc: process
    begin
-	
-		special_case_flag_expected			<=	'U';
-		special_case_result_expected		<=	"UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
-		operand_1_expected					<=	"UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
-		operand_2_expected					<=	"UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
-		mantissa_shift_amount_expected	<=	"UUUUUUUU";
 		
 		-- Generic values (first exponent is the smallest)
 		a											<= "01000010010010010000000000000000";
 		b											<= "11000010111011010000000000000000";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'0';
 		special_case_result_expected		<=	"--------------------------------";
 		operand_1_expected					<=	"01000010010010010000000000000000";
 		operand_2_expected					<=	"11000010111011010000000000000000";
 		mantissa_shift_amount_expected	<=	"00000001";
 		
-		wait for CLK_period / 2;
+		wait for 142 ns;
 
 		-- Generic values (first exponent is the biggest)
 		a											<= "11000010111011010000000000000000";
 		b											<= "01000010010010010000000000000000";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'0';
 		special_case_result_expected		<=	"--------------------------------";
 		operand_1_expected					<=	"01000010010010010000000000000000";
 		operand_2_expected					<=	"11000010111011010000000000000000";
 		mantissa_shift_amount_expected	<=	"00000001";
-		
-		wait for CLK_period / 2;
 
+		wait for 142 ns;
+		
 		-- Generic values (equal exponents)
 		a											<= "11000010111011010000000000000000";
 		b											<= "01000010110010010000000000000000";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'0';
 		special_case_result_expected		<=	"--------------------------------";
 		operand_1_expected					<=	"01000010110010010000000000000000";
 		operand_2_expected					<=	"11000010111011010000000000000000";
 		mantissa_shift_amount_expected	<=	"00000000";
 		
-		wait for CLK_period / 2;
+		wait for 142 ns;
 		
 		-- Generic values (first operand is not normalized)
 		a											<= "10000000011011010000000000000000";
 		b											<= "00000000110010010000000000000000";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'0';
 		special_case_result_expected		<=	"--------------------------------";
 		operand_1_expected					<=	"10000000011011010000000000000000";
 		operand_2_expected					<=	"00000000110010010000000000000000";
 		mantissa_shift_amount_expected	<=	"00000000";
 		
-		wait for CLK_period / 2;
+		wait for 142 ns;
 		
 		-- Generic values (second operand is not normalized)
 		a											<= "00000000110010010000000000000000";
 		b											<= "10000000011011010000000000000000";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'0';
 		special_case_result_expected		<=	"--------------------------------";
 		operand_1_expected					<=	"10000000011011010000000000000000";
 		operand_2_expected					<=	"00000000110010010000000000000000";
 		mantissa_shift_amount_expected	<=	"00000000";
 		
-		wait for CLK_period / 2;
+		wait for 142 ns;
 		
 		-- Generic values (both operands are not normalized)
 		a											<= "10000000011011010000000000000000";
 		b											<= "00000000010010010000000000000000";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'0';
 		special_case_result_expected		<=	"--------------------------------";
 		operand_1_expected					<=	"00000000010010010000000000000000";
 		operand_2_expected					<=	"10000000011011010000000000000000";
 		mantissa_shift_amount_expected	<=	"00000000";
 		
-		wait for CLK_period / 2;
+		wait for 142 ns;
 		
 		-- Special case
 		a											<= "11111111100000000000000000000000";
 		b											<=	"11101011001101001001001110100101";
-		
-		wait for CLK_period / 2;
-		
 		special_case_flag_expected			<=	'1';
 		special_case_result_expected		<=	"11111111100000000000000000000000";
 		operand_1_expected					<=	"--------------------------------";

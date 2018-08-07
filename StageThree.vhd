@@ -8,7 +8,6 @@ use ieee.std_logic_1164.all;
 
 entity StageThree is
 	port (
-		CLK								:	in		std_logic;								-- Clock signal
 		special_case_flag				:	in		std_logic;								-- Whether the operands leads to a special case
 		special_case_result			:	in		std_logic_vector(31 downto 0);	-- Special case result
 		value								:	in		std_logic_vector(36 downto 0);	-- Result of the sum between the two operands
@@ -21,19 +20,16 @@ end StageThree;
 
 architecture Behavioral of StageThree is
 	
-	constant registers_number : integer := 33;
-	
 	alias sign is value(36);
 	alias exponent is value(35 downto 28);
 	alias mantissa is value(27 downto 0);
 	
 	-- Temporary signals
-	-- "_dff" is used to indicate the signal before entering the registers
-	signal normal_result_dff : std_logic_vector(31 downto 0);
-	alias sign_normal_result_dff is normal_result_dff(31);
-	alias exponent_normal_result_dff is normal_result_dff(30 downto 23);
-	alias mantissa_normal_result_dff is normal_result_dff(22 downto 0);
-		
+	signal normal_result 									:	std_logic_vector(31 downto 0);
+	alias sign_normal_result 		is normal_result(31);
+	alias exponent_normal_result 	is normal_result(30 downto 23);
+	alias mantissa_normal_result 	is normal_result(22 downto 0);
+	
 	signal starting_zeros									:	std_logic_vector(4 downto 0);									-- Number of initial zeros of the mantissa
 	signal extended_starting_zeros						:	std_logic_vector(7 downto 0);
 	
@@ -55,24 +51,6 @@ architecture Behavioral of StageThree is
 	
 	--	Special cases
 	signal round_infinite_check							:	std_logic;
-	signal special_case_flag_dff							:	std_logic;
-	signal special_case_result_dff						:	std_logic_vector(31 downto 0);								--
-	
-	signal result_dff : std_logic_vector(31 downto 0);
-	
-	-- Registers
-	signal D, Q : std_logic_vector(0 to registers_number - 1);
-	
-	component Registers
-		generic (
-			n : integer
-		);
-		port (
-			CLK	:	in		std_logic;
-			D		: 	in 	std_logic_vector(0 to n-1);
-			Q		: 	out	std_logic_vector(0 to n-1)
-		);
-	end component;
 	
 	-- Left Extender
 	component LeftExtender
@@ -160,7 +138,7 @@ architecture Behavioral of StageThree is
 begin
 	
 	-- Copy result sign
-	sign_normal_result_dff <= sign;
+	sign_normal_result <= sign;
 	
 	-- Count the initial zeros of the mantissa
 	zero_counter: ZeroCounter
@@ -265,37 +243,20 @@ begin
 			result	=> exponent_after_round_shift
 		);
 		
-	mantissa_normal_result_dff <= mantissa_after_round_shift(22 downto 0)	when	round_overflow = '1' else
-											mantissa_after_round(22 downto 0);
+	mantissa_normal_result <= mantissa_after_round_shift(22 downto 0)	when round_overflow = '1' else
+									  mantissa_after_round(22 downto 0);
 	
-	exponent_normal_result_dff <= exponent_after_round_shift	when	round_overflow = '1' else
-											exponent_after_left_shift;
+	exponent_normal_result <= exponent_after_round_shift when round_overflow = '1' else
+									  exponent_after_left_shift;
 		
 	-- Check if the round produces and infinite value
-	round_infinite_check	<=	'1'	when	round_overflow = '1' and exponent_after_left_shift = "11111110"	else
+	round_infinite_check	<=	'1' when round_overflow = '1' and exponent_after_left_shift = "11111110" else
 									'0';
 									
-	special_case_flag_dff	<=	'1' when (special_case_flag = '1') or (round_infinite_check = '1') else
+	special_case_flag_out	<=	'1' when (special_case_flag = '1') or (round_infinite_check = '1') else
 										'0';
 	
-	-- Connect the registers
-	reg: Registers
-		generic map (
-			n => registers_number
-		)
-		port map (
-         CLK => CLK,
-			D => D,
-			Q => Q
-		);
-	
-	result_dff <= 	normal_result_dff when special_case_flag = '0' else
-						special_case_result;
-	
-	D <= 	result_dff &
-			special_case_flag_dff;
-	
-	result <= Q(0 to 31);
-	special_case_flag_out <= Q(32);
+	result <= normal_result when special_case_flag = '0' else
+				 special_case_result;
 	
 end Behavioral;
