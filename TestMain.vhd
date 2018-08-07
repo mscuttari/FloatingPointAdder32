@@ -9,24 +9,24 @@ use ieee.std_logic_1164.all;
 entity TestMain is
 end TestMain;
 
-architecture behavior of TestMain is 
+architecture behavior of TestMain is
 	component Main
 		port (
 			CLK									: 	in		std_logic;
 			a, b									: 	in		std_logic_vector(31 downto 0);
 			result								: 	out	std_logic_vector(31 downto 0);
 			
-			stg1_special_case_flag			:	out	std_logic;
-			stg1_special_case_result		:	out	std_logic_vector(31 downto 0);
-			stg1_operand_1						:	out	std_logic_vector(31 downto 0);
-			stg1_operand_2						:	out	std_logic_vector(31 downto 0);
-			stg1_mantissa_shift_amount		: 	out	std_logic_vector(0 to 7);
+			stage1_special_case_flag		:	out	std_logic;
+			stage1_special_case_result		:	out	std_logic_vector(31 downto 0);
+			stage1_operand_1					:	out	std_logic_vector(31 downto 0);
+			stage1_operand_2					:	out	std_logic_vector(31 downto 0);
+			stage1_mantissa_shift_amount	: 	out	std_logic_vector(0 to 7);
 			
-			stg2_special_case_flag			:	out	std_logic;
-			stg2_special_case_result		:	out	std_logic_vector(31 downto 0);
-			stg2_sum								:	out	std_logic_vector(36 downto 0);
+			stage2_special_case_flag		:	out	std_logic;
+			stage2_special_case_result		:	out	std_logic_vector(31 downto 0);
+			stage2_sum							:	out	std_logic_vector(36 downto 0);
 			
-			stg3_special_case_flag			:	out	std_logic
+			stage3_special_case_flag		:	out	std_logic
 		);
 	end component;
 	
@@ -44,15 +44,16 @@ architecture behavior of TestMain is
 	signal stage1_special_case_result		:	std_logic_vector(31 downto 0);
 	signal stage1_operand_1						:	std_logic_vector(31 downto 0);
 	signal stage1_operand_2						:	std_logic_vector(31 downto 0);
-	signal stage1_mantissa_shift_amount		: 	std_logic_vector(0 to 7);
+	signal stage1_mantissa_shift_amount		: 	std_logic_vector(0 to 7); 
 	
 	signal stage2_special_case_flag			:	std_logic;
 	signal stage2_special_case_result		:	std_logic_vector(31 downto 0);
+	signal stage2_sum								:	std_logic_vector(36 downto 0);
 	
 	signal stage3_special_case_flag			:	std_logic;
 	
    -- Clock period
-   constant CLK_period : time := 100 ns;
+   constant CLK_period : time := 80 ns;
 	
 begin
 
@@ -72,16 +73,17 @@ begin
          b 			=> b,
          result	=> result,
 			
-			stg1_special_case_flag				=>	stage1_special_case_flag,
-			stg1_special_case_result			=>	stage1_special_case_result,
-			stg1_operand_1							=>	stage1_operand_1,
-			stg1_operand_2							=>	stage1_operand_2,
-			stg1_mantissa_shift_amount 		=>	stage1_mantissa_shift_amount,
+			stage1_special_case_flag		=>	stage1_special_case_flag,
+			stage1_special_case_result		=>	stage1_special_case_result,
+			stage1_operand_1					=>	stage1_operand_1,
+			stage1_operand_2					=>	stage1_operand_2,
+			stage1_mantissa_shift_amount 	=>	stage1_mantissa_shift_amount,
 			
-			stg2_special_case_flag				=>	stage2_special_case_flag,
-			stg2_special_case_result			=>	stage2_special_case_result,
+			stage2_special_case_flag		=>	stage2_special_case_flag,
+			stage2_special_case_result		=>	stage2_special_case_result,
+			stage2_sum							=>	stage2_sum,
 			
-			stg3_special_case_flag				=>	stage3_special_case_flag
+			stage3_special_case_flag		=>	stage3_special_case_flag
 		);
 		
 	test:	check <= '1' when result = result_expected
